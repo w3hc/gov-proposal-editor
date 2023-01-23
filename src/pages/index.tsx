@@ -7,7 +7,7 @@ import { useSigner } from 'wagmi'
 import Image from 'next/image'
 import { govAbi, nftAbi } from '../lib/consts'
 import { ethers } from 'ethers';
-import gifSrc from '../../public/images/error.webp'
+import gifSrc from '../../public/images/gif.webp'
 import { useState, useEffect, useCallback } from "react";
 
 const Home: FC = () => {
