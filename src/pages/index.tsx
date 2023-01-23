@@ -4,10 +4,8 @@ import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { prepareWriteContract, writeContract } from '@wagmi/core'
 import { useSigner } from 'wagmi'
-import Image from 'next/image'
 import { govAbi, nftAbi } from '../lib/consts'
 import { ethers } from 'ethers';
-import gifSrc from '../../public/images/gif.webp'
 import { useState, useEffect, useCallback } from "react";
 
 const Home: FC = () => {
@@ -69,7 +67,7 @@ const Home: FC = () => {
 				</div> : 
 
 				<div className="flex justify-center">
-					<Image style={{borderRadius: '15px', overflow: 'hidden'}} alt="error" src={gifSrc} />
+					<p className="text-red-500">Proposal already submitted.</p>
 				</div>
 	
 				}
