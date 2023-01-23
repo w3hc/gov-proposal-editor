@@ -1,10 +1,52 @@
 import { FC } from 'react'
 import { APP_NAME } from '@/lib/consts'
 import ConnectWallet from '@/components/ConnectWallet'
-import { BookOpenIcon, CodeIcon, ShareIcon } from '@heroicons/react/outline'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
+import { prepareWriteContract, writeContract } from '@wagmi/core'
+import { useSigner } from 'wagmi'
+import Image from 'next/image'
+import { govAbi, nftAbi } from '../lib/consts'
+import { ethers } from 'ethers';
+import gifSrc from '../../public/images/error.webp'
+import { useState, useEffect, useCallback } from "react";
 
 const Home: FC = () => {
+
+	const [gif, setGif] = useState(false)
+
+	const endpoint = 'https://goerli.infura.io/v3/' + process.env.NEXT_PUBLIC_INFURA_ID
+	const provider = new ethers.providers.JsonRpcProvider(endpoint)
+	const nft = new ethers.Contract('0x70456d078950db075283931D9bE2E01B49f3e71e', nftAbi, provider)
+	const addMemberCall = nft.interface.encodeFunctionData('setMetadata', ['3', "https://gateway.ipfs.io/ipfs/bafkreig4sehrl3fdyu3dek47j3dzsmeq6aq6v5t6wvjrzsbleyyw47p4oe"])
+	const calldatas = [addMemberCall.toString()]
+
+	const PROPOSAL_DESCRIPTION = "Update B's NFT metadata\nID #3\n\nNew CID: **https://gateway.ipfs.io/ipfs/bafkreig4sehrl3fdyu3dek47j3dzsmeq6aq6v5t6wvjrzsbleyyw47p4oe**" // Tally takes the first line as proposal title
+	const targets = ['0x1B2EbCC8F787eA02f8C9184012Ebc96cd9C98DB4']
+	const values = ["0"]
+
+	const { data, error, isLoading, refetch } = useSigner()
+
+	const gov = new ethers.Contract('0x690C775dD85365a0b288B30c338ca1E725abD50E', govAbi, data);
+
+	const submitProposal = async () => {
+		try {
+			const propose = await gov.propose(
+				targets, 
+				values, 
+				calldatas, 
+				PROPOSAL_DESCRIPTION
+			  )
+			  console.log("Propose triggered")
+			  const proposeReceipt = await propose.wait(1)
+			  const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
+			  console.log("proposalId:", proposalId)
+			  console.log("proposalId:", proposalId)
+		} catch(e) {
+			console.log("error:", e)
+			setGif(true)
+		}
+	}
+
 	return (
 		<div className="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
 			<div className="absolute top-6 right-6">
@@ -15,140 +57,23 @@ const Home: FC = () => {
 				<div className="flex justify-center pt-8 sm:justify-start sm:pt-0">
 					<h1 className="text-6xl font-bold dark:text-white">{APP_NAME}</h1>
 				</div>
+				
+				<br /><br /><br /><br />
 
-				<div className="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg">
-					<div className="grid grid-cols-1 md:grid-cols-2">
-						<div className="p-6">
-							<div className="flex items-center">
-								<BookOpenIcon className="w-8 h-8 text-gray-500" />
-								<div className="ml-4 text-lg leading-7 font-semibold">
-									<a
-										href="https://nextjs.org/docs"
-										className="underline text-gray-900 dark:text-white"
-									>
-										Next.js Docs
-									</a>
-								</div>
-							</div>
+				{gif == false ? 
+				<div className="flex justify-center">
+				
+					<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 border border-pink-500 hover:border-transparent rounded" onClick={submitProposal}>
+					Submit
+					</button> 
+				</div> : 
 
-							<div className="ml-12">
-								<div className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-									Next.js gives you the best developer experience with all the features you need for
-									production: hybrid static &amp; server rendering, TypeScript support, smart
-									bundling, route pre-fetching, and more. No config needed.
-								</div>
-							</div>
-						</div>
-
-						<div className="p-6 border-t border-gray-200 dark:border-gray-700 md:border-t-0 md:border-l">
-							<div className="flex items-center">
-								<BookOpenIcon className="w-8 h-8 text-gray-500" />
-								<div className="ml-4 text-lg leading-7 font-semibold">
-									<a href="https://wagmi.sh" className="underline text-gray-900 dark:text-white">
-										wagmi Docs
-									</a>
-								</div>
-							</div>
-
-							<div className="ml-12">
-								<div className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-									wagmi is a collection of React Hooks containing everything you need to start working
-									with Ethereum. wagmi makes it easy to display ENS and balance information, sign
-									messages, interact with contracts, and much more — all with caching, request
-									deduplication, and persistence.
-								</div>
-							</div>
-						</div>
-
-						<div className="p-6 border-t border-gray-200 dark:border-gray-700">
-							<div className="flex items-center">
-								<BookOpenIcon className="w-8 h-8 text-gray-500" />
-								<div className="ml-4 text-lg leading-7 font-semibold">
-									<a
-										href="https://laravel-news.com/"
-										className="underline text-gray-900 dark:text-white"
-									>
-										Tailwind Docs
-									</a>
-								</div>
-							</div>
-
-							<div className="ml-12">
-								<div className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-									Tailwind CSS is a highly customizable, low-level CSS framework that gives you all of
-									the building blocks you need to build bespoke designs without any annoying
-									opinionated styles you have to fight to override.
-								</div>
-							</div>
-						</div>
-
-						<div className="p-6 border-t border-gray-200 dark:border-gray-700 md:border-l">
-							<div className="flex items-center">
-								<CodeIcon className="w-8 h-8 text-gray-500" />
-								<div className="ml-4 text-lg leading-7 font-semibold text-gray-900 dark:text-white">
-									About this Template
-								</div>
-							</div>
-
-							<div className="ml-12">
-								<div className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-									This starter kit is composed of{' '}
-									<a href="https://nextjs.org" className="underline" target="_blank" rel="noreferrer">
-										Next.js
-									</a>{' '}
-									and{' '}
-									<a
-										href="https://tailwindcss.com"
-										className="underline"
-										target="_blank"
-										rel="noreferrer"
-									>
-										Tailwind CSS
-									</a>
-									, with{' '}
-									<a
-										href="https://docs.family.co/connectkit"
-										className="underline"
-										target="_blank"
-										rel="noreferrer"
-									>
-										ConnectKit
-									</a>
-									,{' '}
-									<a href="https://ethers.org" className="underline" target="_blank" rel="noreferrer">
-										ethers
-									</a>{' '}
-									&amp;{' '}
-									<a href="https://wagmi.sh" className="underline" target="_blank" rel="noreferrer">
-										wagmi
-									</a>{' '}
-									for all your web3 needs. It uses{' '}
-									<a
-										href="https://www.typescriptlang.org/"
-										className="underline"
-										target="_blank"
-										rel="noreferrer"
-									>
-										Typescript
-									</a>{' '}
-									and an opinionated directory structure for maximum dev confy-ness. Enjoy!
-								</div>
-							</div>
-						</div>
-					</div>
+				<div className="flex justify-center">
+					<Image style={{borderRadius: '15px', overflow: 'hidden'}} alt="error" src={gifSrc} />
 				</div>
+	
+				}
 
-				<div className="flex justify-center mt-4 sm:items-center sm:justify-between">
-					<div className="text-center text-sm text-gray-500 sm:text-left">
-						<div className="flex items-center">
-							<ShareIcon className="-mt-px w-5 h-5 text-gray-400" />
-
-							<a href="https://twitter.com/m1guelpf" className="ml-1 underline">
-								Share
-							</a>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 	)
