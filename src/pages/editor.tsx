@@ -16,6 +16,8 @@ const Home: FC = () => {
 
 	const [err, setErr] = useState(false)
 	const [amount, setAmount] = useState("")
+	const [title, setTitle] = useState("")
+	const [beneficiary, setBeneficiary] = useState("")
 	const [description, setDescription] = useState("")
 	const [selectedFile, setSelectedFile] = useState(null);
 
@@ -37,19 +39,21 @@ const Home: FC = () => {
 
 			const call = "0x"
 			const calldatas = [call.toString()]
-			const amountStatic = 100000000000000
-			const amountFormatted = ethers.utils.parseEther(amount.toString()).toString()
 
+			let attachedDocumentLink:string
+			let PROPOSAL_DESCRIPTION: string
 
-			const attachedDocumentLink = await handleFileInput()
+			if (selectedFile) {
+				attachedDocumentLink = await handleFileInput()
+				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + attachedDocumentLink + ")"
+			} else {
+				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
+			}
 
-			const PROPOSAL_DESCRIPTION = "Yet another cool contrib #2\n" + description + "\n\n[View attached document](" + attachedDocumentLink + ")"
 			console.log("PROPOSAL_DESCRIPTION:", PROPOSAL_DESCRIPTION)
 
-			const targets = ['0xD8a394e7d7894bDF2C57139fF17e5CBAa29Dd977']
-			const values = [amountStatic.toString()]
-
-			
+			const targets = [beneficiary]
+			const values = [ethers.utils.parseEther(amount)]
 
 			console.log(amount)
 			console.log(description)
@@ -95,44 +99,83 @@ const Home: FC = () => {
 				<div className="absolute top-6 right-6">
 					<ConnectWallet />
 				</div>
-				</div>
+			</div>
 
-				<ThemeSwitcher className="absolute bottom-6 right-6" />
+			<ThemeSwitcher className="absolute bottom-6 right-6" />
 
-				<div className="max-w-6xl mx-auto sm:px-6 lg:px-200">
+			<div className="max-w-6xl mx-auto sm:px-6 lg:px-200">
 					
-				<br /><br /><br /><br />
-
-					<div className="grid max-w-lg gap-6 mb-6 md:grid-cols-1">
-							
+				<div className="grid max-w-lg gap-6 mb-6 md:grid-cols-1">
 					<br /> <br /> <br /> <br /> 
-					</div>
+				</div>
 					
-					<form className="  ">
-
-						<div className="grid gap-6 mb-6 md:grid-cols-1" >
-							
-							<div>
-							
-								<div className="justify-center flex ">
+				<form>
+					<div className="grid gap-6 mb-6 md:grid-cols-1" >
+						<div>
+							<div className="justify-center flex ">
 								<div>
-								<label style={{width:"100%"}} htmlFor="amount" className=" justify-center flexblock mb-2 text-sm font-medium text-gray-900 dark:text-white">Amount (in ETH)</label>
-								<input 
-									className=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
-									style={{minWidth:"400px"}}
-									type="number" 
-									id="amount" 
-									placeholder="0.0001" 
-									required
-									value={amount}
-									onChange={e => setAmount(e.target.value)} // https://beta.reactjs.org/reference/react-dom/components/input
-								/>
-								</div>
+									<label style={{width:"100%"}} htmlFor="title" className=" justify-center flexblock mb-2 text-sm font-medium text-gray-900 dark:text-white">Proposal title</label>
+									<input 
+										className=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+										style={{minWidth:"400px"}}
+										type="text" 
+										id="amount" 
+										placeholder="Yet another cool contrib" 
+										required
+										value={title}
+										onChange={e => setTitle(e.target.value)}
+									/>
 								</div>
 							</div>
-							<div className="justify-center flex ">
+						</div>
+
+						<div className="grid gap-6 mb-6 md:grid-cols-1" >
 							<div>
-								<label style={{width:"100%"}} htmlFor="message" className=" block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+								<div className="justify-center flex ">
+									<div>
+										<label style={{width:"100%"}} htmlFor="amount" className=" justify-center flexblock mb-2 text-sm font-medium text-gray-900 dark:text-white">
+										Amount (in ETH)
+										</label>
+										<input 
+											className=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+											style={{minWidth:"400px"}}
+											type="number" 
+											id="amount" 
+											placeholder="0.0001" 
+											required
+											value={amount}
+											onChange={e => setAmount(e.target.value)} // https://beta.reactjs.org/reference/react-dom/components/input
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div className="grid gap-6 mb-6 md:grid-cols-1" >
+							<div>
+								<div className="justify-center flex ">
+									<div>
+										<label style={{width:"100%"}} htmlFor="beneficiary" className=" justify-center flexblock mb-2 text-sm font-medium text-gray-900 dark:text-white">
+										Target address (beneficiary)
+										</label>
+										<input 
+											className=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+											style={{minWidth:"400px"}}
+											type="text" 
+											id="beneficiary" 
+											placeholder="0xD8a394e7d7894bDF2C57139fF17e5CBAa29Dd977" 
+											required
+											value={beneficiary}
+											onChange={e => setBeneficiary(e.target.value)} // https://beta.reactjs.org/reference/react-dom/components/input
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div className="justify-center flex ">
+							<div>
+								<label style={{width:"100%"}} htmlFor="message" className=" block text-sm font-medium text-gray-900 dark:text-white">
 								Description
 								</label>
 								<textarea 
@@ -146,13 +189,13 @@ const Home: FC = () => {
 
 								>
 								</textarea>
-								</div>
-								</div>
 							</div>
-							<div className="justify-center flex ">
-							<div>
-							{/* https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file */}
-							<label style={{minWidth:"400px", width:"100%"}} className="block mb-2 text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Upload file</label>
+						</div>
+					</div>
+
+					<div className="justify-center flex ">
+						<div>
+							<label style={{minWidth:"400px", width:"100%"}} className="block text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Attached document</label>
 							<input 
 								className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" 
 								id="file_input" 
@@ -160,35 +203,26 @@ const Home: FC = () => {
 								style={{minWidth:"400px", width:"100%"}}
 								onChange={(e) => setSelectedFile(e.target.files[0])}
 							/>
+						</div>
+					</div>
 
-							{/* <div className="flex justify-center">
+					{err == false ? 
 
-								<button className="bg-transparent hover:bg-purple-500 text-purple-700 font-semibold hover:text-white py-2 px-4 mt-10 border border-purple-500 hover:border-transparent rounded" 
-								onClick={Upload}>
-								Upload
-								</button> 
+					<div className="flex justify-center">
 
-							</div> */}
-							</div>
-							</div>
-							{err == false ? 
+						<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-10 border border-pink-500 hover:border-transparent rounded" 
+						onClick={submitProposal}>
+						Submit
+						</button> 
 
-							<div className="flex justify-center">
+					</div> : 
 
-								<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-10 border border-pink-500 hover:border-transparent rounded" 
-								onClick={submitProposal}>
-								Submit
-								</button> 
+					<div className="flex justify-center">
+						<p className="text-red-500"><strong>You can&apos;t do that, my friend!</strong> 😿</p>
+					</div>
 
-							</div> : 
-
-							<div className="flex justify-center">
-								<p className="text-red-500"><strong>You can&apos;t do that, my friend!</strong> 😿</p>
-							</div>
-
-							}
-					</form>
-								
+					}
+					</form>	
 				</div>
 			</div>
 		</>
