@@ -7,7 +7,6 @@ import { useSigner } from 'wagmi'
 import { govAbi, nftAbi } from '../lib/consts'
 import { ethers } from 'ethers';
 import { useState, useEffect, useCallback } from "react";
-import ReactMarkdown from 'react-markdown' // https://blog.logrocket.com/how-to-safely-render-markdown-using-react-markdown/
 import Link from 'next/link'
 import Head from 'next/head'
 
