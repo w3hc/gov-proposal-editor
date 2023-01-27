@@ -11,9 +11,11 @@
 	},
 	"dependencies": {
 		"@heroicons/react": "^1.0.6",
+		"@medusa-network/medusa-sdk": "^0.0.2",
 		"autoprefixer": "^10.4.7",
 		"connectkit": "^0.0.2",
 		"ethers": "^5.7.1",
+		"js-base64": "^3.7.4",
 		"next": "12.1.6",
 		"next-themes": "^0.2.0",
 		"postcss": "^8.4.14",

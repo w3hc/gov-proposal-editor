@@ -28,6 +28,7 @@ const Home: FC = () => {
 		console.log("handleFileInput triggered")
 		console.log("file:", selectedFile)
 		console.log("file name:", selectedFile.name)
+
 		return UploadFile(selectedFile)
 	}
 
