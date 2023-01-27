@@ -6,9 +6,7 @@ import { ConnectKitProvider, getDefaultClient } from 'connectkit'
 
 const chains = [ arbitrumGoerli ];
 
-// const alchemyId = process.env.ALCHEMY_ID;
-const alchemyId = "ca2mVd6UfNr5N0YeaKRG4V6J4QgC_jD1";
-
+const alchemyId = process.env.NEXT_PUBLIC_ARBITRUM_ALCHEMY_ID;
 
 const client = createClient(
 	getDefaultClient({

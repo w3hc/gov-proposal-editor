@@ -9,7 +9,7 @@ import Link from 'next/link'
 import Head from 'next/head'
 import { UploadFile } from '../components/UploadFile'
 
-const endpoint = 'https://goerli.infura.io/v3/' + process.env.NEXT_PUBLIC_INFURA_ID
+const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
 
 const Home: FC = () => {
@@ -22,7 +22,7 @@ const Home: FC = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 
 	const { data, error, isLoading, refetch } = useSigner()
-	const gov = new ethers.Contract('0x690C775dD85365a0b288B30c338ca1E725abD50E', govAbi, data)
+	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, data)
 
 	const handleFileInput = async () => {
 		console.log("handleFileInput triggered")
@@ -207,7 +207,7 @@ const Home: FC = () => {
 						</div>
 					</div>
 
-					{err == false ? 
+					{err != false ? 
 
 					<div className="flex justify-center">
 
