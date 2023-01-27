@@ -71,7 +71,7 @@ const Home: FC = () => {
 			const proposeReceipt = await propose.wait(1)
 			const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
 			console.log("proposalId:", proposalId)
-			console.log("Tally link:", "https://www.tally.xyz/gov/girlygov-64/proposal/" + proposalId)
+			console.log("Tally link:", "https://www.tally.xyz/gov/abyss-gov/proposal/" + proposalId)
 
 		} catch(e) {
 			console.log("error:", e)
