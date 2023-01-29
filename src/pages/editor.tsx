@@ -2,7 +2,7 @@ import { FC } from 'react'
 import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
-import { govAbi } from '../lib/consts'
+import { govAbi, TALLY_DAO_NAME } from '../lib/consts'
 import { ethers } from 'ethers';
 import { useState } from "react";
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import { UploadFile } from '../components/UploadFile'
 
 const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
+const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Home: FC = () => {
 
@@ -71,7 +72,7 @@ const Home: FC = () => {
 			const proposeReceipt = await propose.wait(1)
 			const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
 			console.log("proposalId:", proposalId)
-			console.log("Tally link:", "https://www.tally.xyz/gov/abyss-gov/proposal/" + proposalId)
+			console.log("Tally link:", baseUrl + proposalId)
 
 		} catch(e) {
 			console.log("error:", e)
@@ -207,7 +208,7 @@ const Home: FC = () => {
 						</div>
 					</div>
 
-					{err != false ? 
+					{err != true ? 
 
 					<div className="flex justify-center">
 
