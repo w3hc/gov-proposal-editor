@@ -4,7 +4,7 @@ import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
 import { govAbi, TALLY_DAO_NAME } from '../../../lib/consts'
 import { ethers } from 'ethers';
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link'
 import Head from 'next/head'
 import { UploadFile } from '../../../components/UploadFile'
@@ -31,6 +31,18 @@ const Proposal: FC = () => {
 	const { data, error, isLoading, refetch } = useSigner()
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, data)
 
+    const [block, setBlock] = useState(0);
+	const [manifesto, setManifesto] = useState("");
+	const [proposal, setProposal] = useState<{id:string; link:string, title: string, state: number}[]>([{
+		id: "12345678",
+		link: "http://link.com",
+		title: "",
+		state: 0
+	},]);
+	const [initialized, setInitialized] = useState(false);
+
+
+    
 	return (
 		<>
 			<Head>

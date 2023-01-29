@@ -116,7 +116,7 @@ const Home: FC = () => {
 	},[getProposals, proposal]);
 
 	function Item(props) {
-		return <p><strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href = {props.link}>{props.title} </a></strong> { proposalState[props.state]} </p>
+		return <p><strong><a style={{color:"#45a2f8"}} href = {props.link}>{props.title} </a></strong> { proposalState[props.state]} </p>
 	} 
 	
 	function List() {
@@ -157,35 +157,44 @@ const Home: FC = () => {
 				<div className="grid max-w-lg gap-6 mb-6 md:grid-cols-1">
 					<br /> <br /> <br /> <br /> 
 				</div>
-
-        {initialized === true ? <>
+					
+					<div className="grid gap-6 mb-6 md:grid-cols-1" >
+						<div>
+							<div className="justify-center flex ">
+								<div>
+								{initialized === true ? <>
         
-        <div className={inter.className}>
-  
-          <p>Current block number: <strong>{block}</strong></p><br />
-          <p>Gov contract address: <strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://goerli.arbiscan.io/address/0x17BccCC8E7c0DC62453a508988b61850744612F3#code">{gov.address}</a></strong></p><br />
-          <p>Manifesto: <a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://bafybeihmgfg2gmm23ozur3ylmkxgwkyr5dlpruivv3wjeujrdktxihqe3a.ipfs.w3s.link/manifesto.md"><strong>{manifesto}</strong></a></p><br />
-          
-          <h3>All proposals </h3><br />
+									<div className={inter.className}>
+							
+									<p>Current block number: <strong>{block}</strong></p><br />
+									<p>Gov contract address: <strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://goerli.arbiscan.io/address/0x17BccCC8E7c0DC62453a508988b61850744612F3#code">{gov.address}</a></strong></p><br />
+									<p>Manifesto: <a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://bafybeihmgfg2gmm23ozur3ylmkxgwkyr5dlpruivv3wjeujrdktxihqe3a.ipfs.w3s.link/manifesto.md"><strong>{manifesto}</strong></a></p><br />
+									
+									<h3>All proposals </h3><br />
 
-          <List />
+									<List />
 
-          
-        </div>
+									
+									</div>
 
-		<div className="flex justify-center">
-			<Link
-				href="/editor"
-			>
-				<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-3 px-6 border border-pink-500 hover:border-transparent rounded" >
-					New proposal
-				</button>
-			</Link>
-		</div>
-		
-		</>
+									<div className="flex justify-center">
+									<Link
+											href="/editor"
+										>
+											<br /><br /><button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-3 px-6 border border-pink-500 hover:border-transparent rounded" >
+												New proposal
+											</button>
+										</Link>
+									</div>
+									
+									</>
 
-        : <p className={inter.className}>Loading...</p>}
+									: <p className={inter.className}>Loading...</p>}
+								</div>
+							</div>
+						</div>
+
+        
 		
 
 					{/* {err != true ? 
@@ -205,6 +214,7 @@ const Home: FC = () => {
 
 					} */}
 				</div>
+			</div>
 			</div>
 		</>
 	)
