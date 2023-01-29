@@ -12,12 +12,14 @@ import { useRouter } from 'next/router'
 
 const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
-const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Proposal: FC = () => {
 
     const router = useRouter()
     const proposalId = router.query.proposalId as string
+    // const proposalId = "25594979890771732277263490866077345389024188622088333016531046445084845831759"
+    const tallyLink = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"+proposalId+""
+    console.log("tallyLink:", tallyLink)
 
 	const [err, setErr] = useState(false)
 	const [amount, setAmount] = useState("")
@@ -28,61 +30,6 @@ const Proposal: FC = () => {
 
 	const { data, error, isLoading, refetch } = useSigner()
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, data)
-
-	const handleFileInput = async () => {
-		console.log("handleFileInput triggered")
-		console.log("file:", selectedFile)
-		console.log("file name:", selectedFile.name)
-
-		return UploadFile(selectedFile)
-	}
-
-	const submitProposal = async (e:any) => {
-		
-		try {
-			
-			e.preventDefault();
-
-			const call = "0x"
-			const calldatas = [call.toString()]
-
-			let attachedDocumentLink:string
-			let PROPOSAL_DESCRIPTION: string
-
-			if (selectedFile) {
-				attachedDocumentLink = await handleFileInput()
-				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + attachedDocumentLink + ")"
-			} else {
-				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
-			}
-
-			console.log("PROPOSAL_DESCRIPTION:", PROPOSAL_DESCRIPTION)
-
-			const targets = [beneficiary]
-			const values = [ethers.utils.parseEther(amount)]
-
-			console.log(amount)
-			console.log(description)
-			console.log("submitProposal triggered")
-			setAmount(amount)
-			
-			const propose = await gov.propose(
-				targets, 
-				values, 
-				calldatas, 
-				PROPOSAL_DESCRIPTION
-			)
-			console.log("Propose triggered")
-			const proposeReceipt = await propose.wait(1)
-			const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
-			console.log("proposalId:", proposalId)
-			console.log("Tally link:", baseUrl + proposalId)
-
-		} catch(e) {
-			console.log("error:", e)
-			setErr(true)
-		}
-	}
 
 	return (
 		<>
@@ -115,36 +62,39 @@ const Proposal: FC = () => {
 					<br /> <br /> <br /> <br /> 
 				</div>
 					
-				<form>
+				
 					<div className="grid gap-6 mb-6 md:grid-cols-1" >
 						<div>
 							<div className="justify-center flex ">
 								<div>
                                     
-									<label style={{width:"100%"}} htmlFor="title" className=" justify-center flexblock mb-2 text-sm font-medium text-gray-900 dark:text-white">{proposalId}</label>
-									
+									<label style={{width:"100%"}} htmlFor="title" className=" justify-center flexblock mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                        {proposalId}
+                                    </label><br /><br />
+
+                                    <p>[Title]</p><br />
+									<p>[Description]</p><br />
+                                    <p>[attached document]</p><br />
+
 								</div>
 							</div>
 						</div>
 
 					</div>
-					{err != true ? 
+			
 
 					<div className="flex justify-center">
 
-						<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-10 border border-pink-500 hover:border-transparent rounded" 
-						onClick={submitProposal}>
-						Submit
-						</button> 
+                        <a
+                            href={tallyLink}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{color:"#45a2f8"}}
+                        >
+                            <strong>View on Tally</strong>
+                        </a>
 
-					</div> : 
-
-					<div className="flex justify-center">
-						<p className="text-red-500"><strong>You can&apos;t do that, my friend!</strong> 😿</p>
-					</div>
-
-					}
-					</form>	
+					</div> 
 				</div>
 			</div>
 		</>
