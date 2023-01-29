@@ -8,12 +8,15 @@ import { useState } from "react";
 import Link from 'next/link'
 import Head from 'next/head'
 import { UploadFile } from '../components/UploadFile'
+import { useRouter } from 'next/router'
 
 const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
 const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Home: FC = () => {
+
+	const router = useRouter();
 
 	const [err, setErr] = useState(false)
 	const [amount, setAmount] = useState("")
@@ -73,6 +76,9 @@ const Home: FC = () => {
 			const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
 			console.log("proposalId:", proposalId)
 			console.log("Tally link:", baseUrl + proposalId)
+			const targetURL = "/proposal/"+proposalId
+
+			router.push(targetURL)
 
 		} catch(e) {
 			console.log("error:", e)
