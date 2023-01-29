@@ -130,7 +130,7 @@ const Home: FC = () => {
 				<title>Gov Proposal Editor</title>
 				<meta name="description" content="Gov Proposal Editor simplifies the proposal submission process leveraging Web3.Storage (IPFS + Filcoin), makes it more adapted to Gov and also intends to add a privacy layer thanks to Medusa Network." />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<link rel="icon" href="./favicon.ico" />
+				{/* <link rel="icon" href="./favicon.ico" /> */}
 			</Head>
 	
 			<div className="items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">

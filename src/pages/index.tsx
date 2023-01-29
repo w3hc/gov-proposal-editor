@@ -130,7 +130,7 @@ const Home: FC = () => {
 				<title>Gov Proposal Editor</title>
 				<meta name="description" content="Gov Proposal Editor simplifies the proposal submission process leveraging Web3.Storage (IPFS + Filcoin), makes it more adapted to Gov and also intends to add a privacy layer thanks to Medusa Network." />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<link rel="icon" href="./favicon.ico" />
+				{/* <link rel="icon" href="./favicon.ico" /> */}
 			</Head>
 	
 			<div className="items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
@@ -169,16 +169,16 @@ const Home: FC = () => {
 
           
         </div>
+
 		<div className="flex justify-center">
-						<Link
-							href="/editor"
-						>
-							<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-3 px-6 border border-pink-500 hover:border-transparent rounded" >
-								New proposal
-							</button>
-						</Link>
-					</div>
-		
+			<Link
+				href="/editor"
+			>
+				<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-3 px-6 border border-pink-500 hover:border-transparent rounded" >
+					New proposal
+				</button>
+			</Link>
+		</div>
 		
 		</>
 
