@@ -2,12 +2,12 @@ import { FC } from 'react'
 import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
-import { govAbi, TALLY_DAO_NAME } from '../lib/consts'
+import { govAbi, TALLY_DAO_NAME } from '../../lib/consts'
 import { ethers } from 'ethers';
 import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link'
 import Head from 'next/head'
-import { UploadFile } from '../components/UploadFile'
+import { UploadFile } from '../../components/UploadFile'
 import { Inter } from '@next/font/google'
 import styles from '../../styles/Home.module.css'
 
@@ -17,7 +17,7 @@ const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 // const endpoint = "https://endpoints.omniatech.io/v1/arbitrum/goerli/public"
 console.log(endpoint)
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
-// const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
+const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Home: FC = () => {
 
@@ -27,7 +27,6 @@ const Home: FC = () => {
 	const [beneficiary, setBeneficiary] = useState("")
 	const [description, setDescription] = useState("")
 	const [selectedFile, setSelectedFile] = useState(null);
-	// const [proposalId, setProposalId] = useState(0);
 
 	const { data, error, isLoading, refetch } = useSigner()
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, provider)
@@ -52,7 +51,6 @@ const Home: FC = () => {
 		"Expired",
 		"Executed"
 	]
-	const baseUrl = "/proposal/"
  
 	useEffect(() => {
 		getBlock();
@@ -90,7 +88,6 @@ const Home: FC = () => {
 			for( i; i < Number(proposals.length) ; i++) {
 				// console.log("executed:", String(proposals[i].args?.proposalId))
 				console.log("proposals[i]:", proposals[i].args[8][0])
-
 				proposalsRaw.push(...[{
 				id: String(proposals[i].args?.proposalId), 
 				link: baseUrl + String(proposals[i].args?.proposalId),
