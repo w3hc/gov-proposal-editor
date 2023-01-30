@@ -17,7 +17,7 @@ const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 // const endpoint = "https://endpoints.omniatech.io/v1/arbitrum/goerli/public"
 console.log(endpoint)
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
-// const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
+const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Home: FC = () => {
 
@@ -27,7 +27,6 @@ const Home: FC = () => {
 	const [beneficiary, setBeneficiary] = useState("")
 	const [description, setDescription] = useState("")
 	const [selectedFile, setSelectedFile] = useState(null);
-	// const [proposalId, setProposalId] = useState(0);
 
 	const { data, error, isLoading, refetch } = useSigner()
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, provider)
@@ -52,7 +51,6 @@ const Home: FC = () => {
 		"Expired",
 		"Executed"
 	]
-	const baseUrl = "/proposal/"
  
 	useEffect(() => {
 		getBlock();
@@ -90,7 +88,6 @@ const Home: FC = () => {
 			for( i; i < Number(proposals.length) ; i++) {
 				// console.log("executed:", String(proposals[i].args?.proposalId))
 				console.log("proposals[i]:", proposals[i].args[8][0])
-
 				proposalsRaw.push(...[{
 				id: String(proposals[i].args?.proposalId), 
 				link: baseUrl + String(proposals[i].args?.proposalId),
@@ -116,7 +113,7 @@ const Home: FC = () => {
 	},[getProposals, proposal]);
 
 	function Item(props) {
-		return <p><strong><a style={{color:"#45a2f8"}} href = {props.link}>{props.title} </a></strong> { proposalState[props.state]} </p>
+		return <p><strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href = {props.link}>{props.title} </a></strong> { proposalState[props.state]} </p>
 	} 
 	
 	function List() {
@@ -157,47 +154,25 @@ const Home: FC = () => {
 				<div className="grid max-w-lg gap-6 mb-6 md:grid-cols-1">
 					<br /> <br /> <br /> <br /> 
 				</div>
-					
-					<div className="grid gap-6 mb-6 md:grid-cols-1" >
-						<div>
-							<div className="justify-center flex ">
-								<div>
-								{initialized === true ? <>
+
+        {initialized === true ? <>
         
-									<div className={inter.className}>
-							
-									<p>Current block number: <strong>{block}</strong></p><br />
-									<p>Gov contract address: <strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://goerli.arbiscan.io/address/0x17BccCC8E7c0DC62453a508988b61850744612F3#code">{gov.address}</a></strong></p><br />
-									<p>Manifesto: <a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://bafybeihmgfg2gmm23ozur3ylmkxgwkyr5dlpruivv3wjeujrdktxihqe3a.ipfs.w3s.link/manifesto.md"><strong>{manifesto}</strong></a></p><br />
-									
-									<h3>All proposals </h3><br />
+        <div className={inter.className}>
+  
+          <p>Current block number: <strong>{block}</strong></p><br />
+          <p>Gov contract address: <strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://goerli.arbiscan.io/address/0x17BccCC8E7c0DC62453a508988b61850744612F3#code">{gov.address}</a></strong></p><br />
+          <p>Manifesto: <a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://bafybeihmgfg2gmm23ozur3ylmkxgwkyr5dlpruivv3wjeujrdktxihqe3a.ipfs.w3s.link/manifesto.md"><strong>{manifesto}</strong></a></p><br />
+          
+          <h3>All proposals </h3><br />
 
-									<List />
+          <List />
+          
+        </div></>
 
-									
-									</div>
-
-									<div className="flex justify-center">
-									<Link
-											href="/editor"
-										>
-											<br /><br /><button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-3 px-6 border border-pink-500 hover:border-transparent rounded" >
-												New proposal
-											</button>
-										</Link>
-									</div>
-									
-									</>
-
-									: <p className={inter.className}>Loading...</p>}
-								</div>
-							</div>
-						</div>
-
-        
+        : <p className={inter.className}>Loading...</p>}
 		
 
-					{/* {err != true ? 
+					{err != true ? 
 
 					<div className="flex justify-center">
 
@@ -212,9 +187,8 @@ const Home: FC = () => {
 						<p className="text-red-500"><strong>You can&apos;t do that, my friend!</strong> 😿</p>
 					</div>
 
-					} */}
+					}
 				</div>
-			</div>
 			</div>
 		</>
 	)

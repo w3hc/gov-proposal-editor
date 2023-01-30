@@ -4,6 +4,8 @@ A proposal editor for [Gov](https://github.com/w3hc/gov).
 
 Live demo: [https://gov-proposal-editor.netlify.app/](https://gov-proposal-editor.netlify.app/)
 
+[Private Doc](https://github.com/w3hc/private-doc) is the Medusa client Solidity contract. 
+
 ## Motivation
 
 We now have great tools to build DAOs, including [Open Zeppelin's Governor](https://blog.openzeppelin.com/governor-smart-contract/) and [Tally](https://www.tally.xyz/). Gov is a DAO template that combines Governor and ERC-721. Tally's UX is pretty remarkable, Gov Proposal Editor simplifies the proposal submission process leveraging [Web3.Storage](https://web3.storage/) (IPFS + Filecoin), makes it more adapted to Gov and also intends to add a privacy layer thanks to [Medusa Network](https://medusanet.xyz/).

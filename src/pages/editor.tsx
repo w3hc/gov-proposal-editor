@@ -2,17 +2,21 @@ import { FC } from 'react'
 import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
-import { govAbi } from '../lib/consts'
+import { govAbi, TALLY_DAO_NAME } from '../lib/consts'
 import { ethers } from 'ethers';
 import { useState } from "react";
 import Link from 'next/link'
 import Head from 'next/head'
 import { UploadFile } from '../components/UploadFile'
+import { useRouter } from 'next/router'
 
-const endpoint = 'https://goerli.infura.io/v3/' + process.env.NEXT_PUBLIC_INFURA_ID
+const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
+const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Home: FC = () => {
+
+	const router = useRouter();
 
 	const [err, setErr] = useState(false)
 	const [amount, setAmount] = useState("")
@@ -22,12 +26,13 @@ const Home: FC = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 
 	const { data, error, isLoading, refetch } = useSigner()
-	const gov = new ethers.Contract('0x690C775dD85365a0b288B30c338ca1E725abD50E', govAbi, data)
+	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, data)
 
 	const handleFileInput = async () => {
 		console.log("handleFileInput triggered")
 		console.log("file:", selectedFile)
 		console.log("file name:", selectedFile.name)
+
 		return UploadFile(selectedFile)
 	}
 
@@ -70,7 +75,10 @@ const Home: FC = () => {
 			const proposeReceipt = await propose.wait(1)
 			const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
 			console.log("proposalId:", proposalId)
-			console.log("Tally link:", "https://www.tally.xyz/gov/girlygov-64/proposal/" + proposalId)
+			console.log("Tally link:", baseUrl + proposalId)
+			const targetURL = "/proposal/"+proposalId
+
+			router.push(targetURL)
 
 		} catch(e) {
 			console.log("error:", e)
@@ -206,7 +214,7 @@ const Home: FC = () => {
 						</div>
 					</div>
 
-					{err == false ? 
+					{err != true ? 
 
 					<div className="flex justify-center">
 

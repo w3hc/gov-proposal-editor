@@ -1,18 +1,19 @@
 import { useTheme } from 'next-themes'
 import { APP_NAME } from '@/lib/consts'
 import { createClient, WagmiConfig, chain } from 'wagmi'
-import { goerli } from 'wagmi/chains'
+import { arbitrumGoerli } from 'wagmi/chains'
 import { ConnectKitProvider, getDefaultClient } from 'connectkit'
 
-const chains = [goerli];
+const chains = [ arbitrumGoerli ];
+
+const alchemyId = process.env.NEXT_PUBLIC_ARBITRUM_ALCHEMY_ID;
 
 const client = createClient(
 	getDefaultClient({
 		appName: APP_NAME,
-		autoConnect: true,
-		infuraId: process.env.NEXT_PUBLIC_INFURA_ID,
+		alchemyId,
 		chains,
-	})
+	  }),
 )
 
 const Web3Provider = ({ children }) => {
