@@ -66,13 +66,13 @@ const Home: FC = () => {
 
 	const getManifesto = async () => {
 		const getManifesto = await gov.manifesto();
-		setManifesto(getManifesto);
+		console.log("getManifesto:", getManifesto)
+		if (getManifesto === "") {
+			setManifesto("unset")
+		} else {
+			setManifesto(getManifesto)
+		}
 	}
-
-	// const getTitle = async () => {
-	// 	// event, description, 1ere ligne
-	// 	return "yo"
-	// }
 
 	const getState = async (proposalId) => {
 		return await gov.state(proposalId);
