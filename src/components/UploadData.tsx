@@ -1,6 +1,6 @@
 import { Web3Storage } from "web3.storage"
 
-export const UploadFile = async (selectedFile:any) => {
+export const UploadData = async (selectedFile:any) => {
 
     // prepare storage
     function getAccessToken() {
