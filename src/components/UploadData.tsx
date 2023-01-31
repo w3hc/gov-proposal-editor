@@ -39,8 +39,8 @@ export const UploadData = async (selectedFile:any, selectedFileName:any) => {
 
     const cid = await storeFile()
 
-    console.log("✅ [encrypted file] cid:", cid)
-    console.log("✅ [encrypted file] url:", "https://" + cid + ".ipfs.w3s.link" + "/" + selectedFileName)
+    console.log("✅ [UploadData] cid:", cid)
+    console.log("✅ [UploadData] url:", "https://" + cid + ".ipfs.w3s.link" + "/" + selectedFileName)
 
-    return "https://" + cid + ".ipfs.w3s.link"
+    return "https://" + cid + ".ipfs.w3s.link" + "/" + selectedFileName + ""
 }

@@ -13,6 +13,7 @@ import { useRouter } from 'next/router'
 import { Medusa, EVMG1Point, SuiteType } from "@medusa-network/medusa-sdk"
 // import { Base64 } from "js-base64"
 import { HGamalEVMCipher } from '@medusa-network/medusa-sdk'
+import toast from 'react-hot-toast'
 
 const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
@@ -105,9 +106,9 @@ const Home: FC = () => {
 			const encryptedData = await encryptSelectedFile(selectedFile)
 			console.log("selectedFile.name:", selectedFile.name)
 
-			const encryptedFileCid = await UploadData(encryptedData, selectedFile.name)
-			console.log("encryptedFileCid:", encryptedFileCid)
-			return encryptedFileCid
+			const encryptedFileUrl = await UploadData(encryptedData, selectedFile.name)
+			console.log("[editor] encryptedFileUrl:", encryptedFileUrl)
+			return encryptedFileUrl
 
 		} else {
 			return UploadFile(selectedFile)
@@ -159,7 +160,18 @@ const Home: FC = () => {
 			console.log("Tally link:", baseUrl + proposalId)
 			const targetURL = "/proposal/"+proposalId
 
-			router.push(targetURL)
+			// router.push(targetURL)
+			toast.success(
+				<a
+				  className="inline-flex items-center text-blue-600 hover:underline"
+				  target="_blank"
+				  rel="noreferrer"
+				>
+				  Success!
+				  <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path></svg>
+				</a>
+		
+			  )
 
 		} catch(e) {
 			console.log("error:", e)
