@@ -17,12 +17,15 @@ const provider = new ethers.providers.JsonRpcProvider(endpoint)
 
 const ProposalPage: FC = () => {
 
+	const encrypted:boolean = true
+
 	const router = useRouter()
     const proposalId = router.query.proposalId as string
 	const tallyLink = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"+proposalId
 	const [selectedFile, setSelectedFile] = useState(null);
+	const [decryptedFile, setDecryptedFile] = useState("")
 
-	// const { data, error, isLoading, refetch } = useSigner()
+	const { data, error, isLoading, refetch } = useSigner()
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, provider)
 
 	const [block, setBlock] = useState(0);
@@ -51,6 +54,22 @@ const ProposalPage: FC = () => {
 	useEffect(() => {
 		getBlock();
 	},[]);
+
+	const decrypt = async (fileToDecrypt:any) => {
+	// const decrypt = async () => {
+		if (encrypted != true) {
+
+
+			// Medusa
+
+
+			setDecryptedFile("https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg") // placeholder
+			return "https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg" // placeholder
+		} else {
+			setDecryptedFile("https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg") // placeholder
+			return "https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg" // placeholder
+		}
+	}
 	
 	const getBlock = async () => {
 		const blockNumber = await provider.getBlockNumber();
@@ -84,23 +103,27 @@ const ProposalPage: FC = () => {
 							description: proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")),
 							selectedFile: proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") )
 						}])
+						setSelectedFile(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 					}	
 				}
 				delete proposal[0];
 				setProposal(proposalsRaw);
-				// console.log("proposal post loop:", proposal);
 				setInitialized(true);
-				setSelectedFile("https://bafybeihr23xba37nt2tsayez6w3aefp77kr3cbswflmzzdu7otm52ze2ei.ipfs.w3s.link")
 				}
 			} catch(error) {
 				console.log("error:", error)
 			}
 		}
+	// },[block, proposal, getState, proposalId, gov])
 	},[block, proposal])
 
 	useEffect(() => {
-		getProposals();
-	},[getProposals, proposal]);
+		getProposals()
+		if (selectedFile) {
+			decrypt(selectedFile)
+		}
+	// },[getProposals, proposal, decrypt, selectedFile])
+	},[getProposals, proposal])
 
 	function Item(props:any) {
 
@@ -116,13 +139,21 @@ const ProposalPage: FC = () => {
 				<br />
 
 				{selectedFile ? 
+					
+					(encrypted == false ?
+						<p style={{color:"red"}}>
+						This file is only accessible to the DAO members.
+					</p> : 
 					<p>
 						<Image 
-						width="300" 
-						height="300" 
-						alt={"selectedFile"} 
-						src={props.selectedFile} />
+							width="300" 
+							height="300" 
+							alt={"selectedFile"} 
+							src={ decryptedFile } 
+						/>
 					</p> 
+					)
+					 
 						
 				: <p>No document attached.</p> }
 
@@ -183,8 +214,10 @@ const ProposalPage: FC = () => {
 											<List />
 										</div>
 
-										<div className="flex justify-center">
+										<br />
 
+										<div className="flex justify-center">
+											
 										<a
 											href={tallyLink}
 											target="_blank" 
