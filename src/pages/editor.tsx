@@ -29,38 +29,14 @@ const Home: FC = () => {
 	const [description, setDescription] = useState("")
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [encryptionRequested, setEncryptionRequested] = useState(false);
-
 	
 	const { data, error, isLoading, refetch } = useSigner()
 	const signer = data
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, signer)
 
-
-
 	const giveKey = async (encryptedKey:HGamalEVMCipher) => {
 
 		console.log("giveKey triggered:", encryptedKey)
-
-		/*
-
-		Ciphertext calldata cipher,
-        string calldata name,
-        string calldata description,
-        uint256 price,
-        string calldata uri
-
-
-		struct Ciphertext {
-			G1Point random;
-			uint256 cipher;
-			/// DLEQ part
-			G1Point random2;
-			DleqProof dleq;
-		}
-
-		*/
-
-		// Medusa client contract: 0x311B7256C792B548481F0b169dAF0374149145b4
 
 		console.log("signer:", signer)
 
@@ -68,11 +44,9 @@ const Home: FC = () => {
 
 		const price = '1.00'
 		const cid = "dddddd"
-		// const num = ethers.utils.parseEther(price || '0.00')
 		const num = 1
 		
 		await medusaClient.createListing(
-			// encryptedKey.cipher._hex ,
 			encryptedKey,
 			"hello",
 			"desc desc desc desc desc",
@@ -96,7 +70,6 @@ const Home: FC = () => {
 
 		const reader = new FileReader()
 
-    	// const buffer = reader.readAsBinaryString(selectedFile);
     	reader.readAsDataURL(selectedFile)
 		reader.onload = async (event) => {
 			const buffer = event.target?.result as string
@@ -104,25 +77,20 @@ const Home: FC = () => {
 			const { encryptedData, encryptedKey } = await medusa.encrypt(
 				buff,
 				"0x311B7256C792B548481F0b169dAF0374149145b4",
-			  );
-			  console.log("encryptedData:", encryptedData)
-			  console.log("encryptedKey:", encryptedKey)
+			);
+			console.log("encryptedData:", encryptedData)
+			console.log("encryptedKey:", encryptedKey)
 
-			  await giveKey(encryptedKey)
+			await giveKey(encryptedKey)
 
-			  return encryptedData
-		  }
-		  reader.onerror = (error) => {
+			return encryptedData
+		}
+		reader.onerror = (error) => {
 			console.log('File Input Error: ', error);
-		  };
+		};
 
 		console.log("selectedFile:", selectedFile)
-		
-		}
-
-
-
-
+	}
 
 	const handleFileInput = async () => {
 		console.log("handleFileInput triggered")
