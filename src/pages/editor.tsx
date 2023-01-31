@@ -28,7 +28,7 @@ const Home: FC = () => {
 	const [beneficiary, setBeneficiary] = useState("")
 	const [description, setDescription] = useState("")
 	const [selectedFile, setSelectedFile] = useState(null);
-	const [encryptionRequested, setEncryptionRequested] = useState(false);
+	const [encryptionRequested, setEncryptionRequested] = useState(true);
 	
 	const { data, error, isLoading, refetch } = useSigner()
 	const signer = data
@@ -52,7 +52,9 @@ const Home: FC = () => {
 			"desc desc desc desc desc",
 			num,
 			"ipfs://xxxx"
-			,{gasLimit: 5000000} // TODO: optimize please
+			// ,{gasLimit: 21000}
+			,{gasLimit: 42000}
+
 			)
 		}
 
@@ -100,12 +102,17 @@ const Home: FC = () => {
 
 		if (encryptionRequested === true) {
 
-			const encryptedData = encryptSelectedFile(selectedFile)
-			// return UploadData(encryptedData)
-			return null
+			const encryptedData = await encryptSelectedFile(selectedFile)
+			console.log("selectedFile.name:", selectedFile.name)
 
+			const encryptedFileCid = await UploadData(encryptedData, selectedFile.name)
+			console.log("encryptedFileCid:", encryptedFileCid)
+			return encryptedFileCid
+
+		} else {
+			return UploadFile(selectedFile)
 		}
-		return UploadFile(selectedFile)
+		
 	}
 
 	const submitProposal = async (e:any) => {
@@ -139,20 +146,20 @@ const Home: FC = () => {
 
 			console.log("encryptionRequested:", encryptionRequested)
 			
-			// const propose = await gov.propose(
-			// 	targets, 
-			// 	values, 
-			// 	calldatas, 
-			// 	PROPOSAL_DESCRIPTION
-			// )
-			// console.log("Propose triggered")
-			// const proposeReceipt = await propose.wait(1)
-			// const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
-			// console.log("proposalId:", proposalId)
-			// console.log("Tally link:", baseUrl + proposalId)
-			// const targetURL = "/proposal/"+proposalId
+			const propose = await gov.propose(
+				targets, 
+				values, 
+				calldatas, 
+				PROPOSAL_DESCRIPTION
+			)
+			console.log("Propose triggered")
+			const proposeReceipt = await propose.wait(1)
+			const proposalId = proposeReceipt.events![0].args!.proposalId.toString()
+			console.log("proposalId:", proposalId)
+			console.log("Tally link:", baseUrl + proposalId)
+			const targetURL = "/proposal/"+proposalId
 
-			// router.push(targetURL)
+			router.push(targetURL)
 
 		} catch(e) {
 			console.log("error:", e)
@@ -286,6 +293,7 @@ const Home: FC = () => {
 							/>
 							<div className="flex items-center">
 								<input 
+									defaultChecked
 									id="encryption-requested" 
 									type="checkbox" 
 									value="" 

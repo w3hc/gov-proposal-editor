@@ -1,8 +1,13 @@
-import { Web3Storage } from "web3.storage"
+import { Web3Storage, Blob, File } from "web3.storage"
 
-export const UploadData = async (selectedFile:any) => {
+export const UploadData = async (selectedFile:any, selectedFileName:any) => {
 
-    // prepare storage
+    console.log("Storing your encrypted file...")
+    // console.log("selectedFileName:", selectedFileName)
+
+    // const fileName = selectedFileName
+    // console.log("fileName:", fileName)
+
     function getAccessToken() {
         return process.env.NEXT_PUBLIC_WEB3STORAGE_TOKEN
     }
@@ -11,16 +16,31 @@ export const UploadData = async (selectedFile:any) => {
         return new Web3Storage({ token: getAccessToken() || "" })
     }
 
-    async function storeFile(selectedFile:any) {
+    function makeFileObjects(selectedFile:any, selectedFileName:any) {
+        const blob = new Blob([selectedFile], {
+            // type: "application/json",
+        });
+    
+        const files = [
+          new File(["contents-of-file-1"], "plain-utf8.txt"),
+          new File([blob], selectedFileName),
+        ];
+        return files
+    }
+
+    async function storeFile() {
         const client = makeStorageClient()
-        const put = await client.put([selectedFile], { wrapWithDirectory:false })
+        console.log("[storeFile] selectedFileName", selectedFileName)
+        const file = makeFileObjects(selectedFile, selectedFileName)
+        const put = await client.put(file, { wrapWithDirectory:true })
+        // const put = await client.put([selectedFileName], { wrapWithDirectory:false })
         return put
     }
 
-    const cid = await storeFile(selectedFile)
+    const cid = await storeFile()
 
-    console.log("✅ cid:", cid)
-    console.log("✅ url:", "https://" + cid + ".ipfs.w3s.link")
+    console.log("✅ [encrypted file] cid:", cid)
+    console.log("✅ [encrypted file] url:", "https://" + cid + ".ipfs.w3s.link" + "/" + selectedFileName)
 
     return "https://" + cid + ".ipfs.w3s.link"
 }
