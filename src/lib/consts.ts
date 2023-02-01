@@ -2,6 +2,9 @@ export const APP_NAME = 'Gov Proposal Editor'
 
 export const TALLY_DAO_NAME = 'abyss-gov'
 
+export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x07548990136EB03695af387A260d8D725FaCf91c"
+export const MEDUSA_ORACLE_CONTRACT_ADDRESS = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
+
 // The <const> assertion enables wagmi to infer the correct types when using the ABI in hooks
 export const govAbi = <const>[
   {

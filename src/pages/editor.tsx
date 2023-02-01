@@ -2,7 +2,7 @@ import { FC } from 'react'
 import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
-import { govAbi, meduasaClientAbi, TALLY_DAO_NAME } from '../lib/consts'
+import { govAbi, meduasaClientAbi, TALLY_DAO_NAME, MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, MEDUSA_ORACLE_CONTRACT_ADDRESS } from '../lib/consts'
 import { ethers } from 'ethers';
 import { useState } from "react";
 import Link from 'next/link'
@@ -30,6 +30,7 @@ const Home: FC = () => {
 	const [description, setDescription] = useState("")
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [encryptionRequested, setEncryptionRequested] = useState(true);
+	const [cypherId, setCypherId] = useState(null);
 	
 	const { data, error, isLoading, refetch } = useSigner()
 	const signer = data
@@ -41,28 +42,36 @@ const Home: FC = () => {
 
 		console.log("signer:", signer)
 
-		const medusaClient = new ethers.Contract('0x311B7256C792B548481F0b169dAF0374149145b4', meduasaClientAbi, signer)
+		const medusaClient = new ethers.Contract(MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, meduasaClientAbi, signer)
 
 		const price = '1.00'
 		const cid = "dddddd"
 		const num = 1
 		
-		await medusaClient.createListing(
-			encryptedKey,
-			"hello",
-			"desc desc desc desc desc",
-			num,
-			"ipfs://xxxx"
-			// ,{gasLimit: 21000}
-			,{gasLimit: 42000}
-
+		try {
+			const medusaCall =await medusaClient.createListing(
+				encryptedKey,
+				"hello",
+				"desc desc desc desc desc",
+				num,
+				"ipfs://xxxx"
+				// ,{gasLimit: 21000}
+				,{gasLimit: 42000}
 			)
-		}
+	
+			setCypherId(medusaCall)
+			console.log("medusaCall:", medusaCall)
+			// console.log("medusaCall:", medusaCall.receipt )
+		} catch(e) {
+			console.error("error:", e)
+		}		
+	}
+		
 
 	const encryptSelectedFile = async (selectedFile:any) => {
 
 		console.log("signer:", signer)
-		const medusaOracleAddress = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
+		const medusaOracleAddress = MEDUSA_ORACLE_CONTRACT_ADDRESS
 		const medusa = await Medusa.init(medusaOracleAddress, signer);
 		console.log("medusa:", medusa)
 
@@ -74,12 +83,13 @@ const Home: FC = () => {
 		const reader = new FileReader()
 
     	reader.readAsDataURL(selectedFile)
+
 		reader.onload = async (event) => {
 			const buffer = event.target?.result as string
 			const buff = new TextEncoder().encode(buffer)
 			const { encryptedData, encryptedKey } = await medusa.encrypt(
 				buff,
-				"0x311B7256C792B548481F0b169dAF0374149145b4",
+				MEDUSA_CLIENT_APP_CONTRACT_ADDRESS,
 			);
 			console.log("encryptedData:", encryptedData)
 			console.log("encryptedKey:", encryptedKey)
@@ -88,6 +98,7 @@ const Home: FC = () => {
 
 			return encryptedData
 		}
+
 		reader.onerror = (error) => {
 			console.log('File Input Error: ', error);
 		};
@@ -113,7 +124,6 @@ const Home: FC = () => {
 		} else {
 			return UploadFile(selectedFile)
 		}
-		
 	}
 
 	const submitProposal = async (e:any) => {
@@ -131,6 +141,9 @@ const Home: FC = () => {
 			if (selectedFile) {
 				attachedDocumentLink = await handleFileInput()
 				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + attachedDocumentLink + ")"
+
+				if (encryptionRequested) PROPOSAL_DESCRIPTION += " encrypted:" + cypherId
+
 			} else {
 				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
 			}
