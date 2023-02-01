@@ -131,6 +131,7 @@ const ProposalPage: FC = () => {
 								setIsEncrypted(false)
 							}
 							setInitialized(true)
+							console.log("proposals[i].args[8]:", proposals[i].args[8])
 						}	
 					}
 				}
