@@ -3,10 +3,6 @@ import { Web3Storage, Blob, File } from "web3.storage"
 export const UploadData = async (selectedFile:any, selectedFileName:any) => {
 
     console.log("Storing your encrypted file...")
-    // console.log("selectedFileName:", selectedFileName)
-
-    // const fileName = selectedFileName
-    // console.log("fileName:", fileName)
 
     function getAccessToken() {
         return process.env.NEXT_PUBLIC_WEB3STORAGE_TOKEN

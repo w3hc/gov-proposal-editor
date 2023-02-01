@@ -19,7 +19,7 @@ const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 const provider = new ethers.providers.JsonRpcProvider(endpoint)
 const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
-const Home: FC = () => {
+const Editor: FC = () => {
 
 	const router = useRouter();
 
@@ -50,12 +50,13 @@ const Home: FC = () => {
 		
 		try {
 			const medusaCall =await medusaClient.createListing(
+
 				encryptedKey,
 				"hello",
 				"desc desc desc desc desc",
 				num,
 				"ipfs://xxxx"
-				// ,{gasLimit: 21000}
+
 				,{gasLimit: 42000}
 			)
 	
@@ -353,4 +354,4 @@ const Home: FC = () => {
 	)
 }
 
-export default Home
+export default Editor
