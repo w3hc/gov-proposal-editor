@@ -14,120 +14,33 @@ import { Medusa, EVMG1Point, SuiteType } from "@medusa-network/medusa-sdk"
 // import { Base64 } from "js-base64"
 import { HGamalEVMCipher } from '@medusa-network/medusa-sdk'
 import toast from 'react-hot-toast'
+import { Base64 } from 'js-base64'
 
 const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
-const provider = new ethers.providers.JsonRpcProvider(endpoint)
+// const provider = new ethers.providers.JsonRpcProvider(endpoint)
 const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Editor: FC = () => {
 
-	const router = useRouter();
-
 	const [err, setErr] = useState(false)
-	const [amount, setAmount] = useState("")
+	// const [amount, setAmount] = useState("")
+	const [amount, setAmount] = useState("1")
 	const [title, setTitle] = useState("")
-	const [beneficiary, setBeneficiary] = useState("")
-	const [description, setDescription] = useState("")
-	const [selectedFile, setSelectedFile] = useState(null);
+	// const [beneficiary, setBeneficiary] = useState("")
+	const [beneficiary, setBeneficiary] = useState("0xD8a394e7d7894bDF2C57139fF17e5CBAa29Dd977")
+	// const [description, setDescription] = useState("")
+	const [description, setDescription] = useState(title)
+	// const [selectedFile, setSelectedFile] = useState(null);
 	const [encryptionRequested, setEncryptionRequested] = useState(true);
-	const [cypherId, setCypherId] = useState(null);
-	const [currentSigner, setCurrentSigner] = useState(null);
-	const [encryptedFileIPFSUrl, setEncryptedFileIPFSUrl] = useState(null);
+	// const [cypherId, setCypherId] = useState(null);
+	// const [currentSigner, setCurrentSigner] = useState(null);
+	// const [encryptedFileIPFSUrl, setEncryptedFileIPFSUrl] = useState(null);
+	const [name, setName] = useState(null);
+	const [plaintext, setPlaintext] = useState(null);
+	const [fileToAddInDescription, setFileToAddInDescription] = useState(null);
 	
+	const router = useRouter();
 	const { data: signer, isError, isLoading } = useSigner()
-
-	useEffect(() => {
-		setCurrentSigner(signer)
-	  }, []);
-
-	const handleFileInput = async () => {
-		console.log("handleFileInput triggered")
-		console.log("file:", selectedFile)
-		console.log("file name:", selectedFile.name)
-		console.log("encryptionRequested:", encryptionRequested)
-
-		if (encryptionRequested === true) {
-
-			const encryptedData = await encrypt(selectedFile)
-			console.log("selectedFile.name:", selectedFile.name)
-
-			const encryptedFileUrl = await UploadData(encryptedData, selectedFile.name)
-			
-			setEncryptedFileIPFSUrl(UploadFile(selectedFile, selectedFile.name))
-			return encryptedFileUrl
-
-		} else {
-			return UploadFile(selectedFile, selectedFile.name)
-		}
-	}
-	const encrypt = async (selectedFile:any) => {
-		console.log("signer:", signer)
-		const medusaOracleAddress = MEDUSA_ORACLE_CONTRACT_ADDRESS
-		const medusa = await Medusa.init(medusaOracleAddress, currentSigner);
-		console.log("medusa:", medusa)
-
-		const medusaPublicKey = await medusa.fetchPublicKey()
-		console.log("medusaPublicKey:", medusaPublicKey)
-		const keypair = await medusa.signForKeypair()
-		console.log("keypair:", keypair)
-
-		const reader = new FileReader()
-
-    	reader.readAsDataURL(selectedFile)
-
-		reader.onload = async (event) => {
-
-			const buffer = event.target?.result as string
-			const buff = new TextEncoder().encode(buffer)
-			console.log("buffer:", buffer)
-			console.log("buff:", buff)
-			
-			const { encryptedData, encryptedKey } = await medusa.encrypt(
-				buff,
-				MEDUSA_CLIENT_APP_CONTRACT_ADDRESS,
-			)
-
-			console.log("encryptedData:", encryptedData)
-			console.log("encryptedKey:", encryptedKey)
-
-			const medusaClient = new ethers.Contract(
-				MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
-				meduasaClientAbi, 
-				currentSigner
-			)
-			
-			try {
-				console.log("[before medusaCall] encryptedKey", encryptedKey)
-				console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
-
-				const medusaCall = await medusaClient.createListing(
-
-					encryptedKey,
-					"placeholder name",
-					"placeholder description",
-					1,
-					encryptedFileIPFSUrl
-
-					,{gasLimit: 80000}
-				)
-
-				console.log("medusaCall:", medusaCall)
-				setCypherId(medusaCall)
-
-				console.log("Arbiscan tx link:", "https://goerli.arbiscan.io/tx/" + medusaCall.hash)
-			} catch(e) {
-				console.error("error:", e)
-			}		
-
-			return encryptedData
-		}
-
-		reader.onerror = (error) => {
-			console.log('File Input Error: ', error);
-		};
-
-		console.log("selectedFile:", selectedFile)
-	}
 
 	const submitProposal = async (e:any) => {
 		
@@ -135,28 +48,103 @@ const Editor: FC = () => {
 			
 			e.preventDefault();
 
+			console.log("handleFileInput triggered")
+			console.log("file name:", name)
+			console.log("encryptionRequested:", encryptionRequested)
+
+			let cipherId:any = null
+
+			// checks if the encryption is requested by user
+			if (encryptionRequested === true) {
+
+				// if requested, do the medusa dance
+				const medusaOracleAddress = MEDUSA_ORACLE_CONTRACT_ADDRESS
+				const medusa = await Medusa.init(medusaOracleAddress, signer);
+				console.log("medusa:", medusa)
+
+				const medusaPublicKey = await medusa.fetchPublicKey()
+				console.log("medusaPublicKey:", medusaPublicKey)
+				const keypair = await medusa.signForKeypair()
+				console.log("keypair:", keypair)
+
+				console.log("plaintext:", plaintext)
+				const buff = new TextEncoder().encode(plaintext)
+				await medusa.fetchPublicKey()
+				const { encryptedData, encryptedKey } = await medusa.encrypt(
+					buff,
+					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS,
+				)
+
+				console.log("encryptedData:", encryptedData)
+				console.log("encryptedKey:", encryptedKey)
+
+				// store that encrypted file
+				const b64EncryptedData = Base64.fromUint8Array(encryptedData)
+				console.log("b64EncryptedData:", b64EncryptedData)
+
+				const encryptedFileIPFSUrl = await UploadData(b64EncryptedData, name)
+
+				// prepare medusa client
+				const medusaClient = new ethers.Contract(
+					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
+					meduasaClientAbi, 
+					signer
+				)
+				
+				console.log("[before medusaCall] encryptedKey", encryptedKey)
+				console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
+
+				// medusa call
+				const medusaCall = await medusaClient.createListing(
+
+					encryptedKey,
+					encryptedFileIPFSUrl
+
+					, {gasLimit:3000000}
+
+				)
+				console.log("[after medusaCall] medusaCall:", medusaCall)
+				console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + medusaCall.hash)
+				cipherId = medusaCall
+
+			} else {
+
+				console.log("[no encryption] plaintext:", plaintext)
+				console.log("[no encryption] name:", name)
+
+				// if encryption is not requested, upload the file to ipfs
+				setFileToAddInDescription(
+					UploadFile(plaintext, name)
+				)
+			}
+
+			// prepare Gov
 			const gov = new ethers.Contract(
 				'0x17BccCC8E7c0DC62453a508988b61850744612F3', 
 				govAbi, 
-				currentSigner
+				signer
 			)
 
+			// prepare calldatas
 			const call = "0x"
 			const calldatas = [call.toString()]
 
+			// prepare proposal description
 			let attachedDocumentLink:string
 			let PROPOSAL_DESCRIPTION: string
+			if (fileToAddInDescription) {
 
-			if (selectedFile) {
-				attachedDocumentLink = await handleFileInput()
+				attachedDocumentLink = fileToAddInDescription
+				attachedDocumentLink = "await handleFileInput()"
 				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + attachedDocumentLink + ")"
-
-				if (encryptionRequested) PROPOSAL_DESCRIPTION += " encrypted:" + cypherId
+				if (encryptionRequested) {
+					PROPOSAL_DESCRIPTION += " encrypted:" + (cipherId === null ? "没有" : cipherId)
+				}
 
 			} else {
 				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
 			}
-
+		
 			console.log("PROPOSAL_DESCRIPTION:", PROPOSAL_DESCRIPTION)
 
 			const targets = [beneficiary]
@@ -182,26 +170,30 @@ const Editor: FC = () => {
 			console.log("Tally link:", baseUrl + proposalId)
 			const targetURL = "/proposal/"+proposalId
 
-			// router.push(targetURL)
-
-			toast.success(
-				<a
-				  className="inline-flex items-center text-blue-600 hover:underline"
-				  target="_blank"
-				  rel="noreferrer"
-				>
-				  Success!
-				  <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path></svg>
-				</a>
-		
-			)
+			router.push(targetURL)
 
 		} catch(e) {
 			console.log("error:", e)
+			console.log("error:", e.value)
 			setErr(true)
 		}
 	}
-
+			
+	const handleFileChange = (event: any) => {
+		console.log("File uploaded successfully!")
+		const file = event
+		setName(file.name)
+		const reader = new FileReader()
+		reader.readAsDataURL(file);
+		reader.onload = (event) => {
+			const plaintext = event.target?.result as string
+			setPlaintext(plaintext)
+		}
+		reader.onerror = (error) => {
+		console.log('File Input Error: ', error);
+		}
+	}
+	
 	return (
 		<>
 			<Head>
@@ -324,7 +316,7 @@ const Editor: FC = () => {
 								id="file_input" 
 								type="file"
 								style={{minWidth:"400px", width:"100%"}}
-								onChange={(e) => setSelectedFile(e.target.files[0])}
+								onChange={(e) => handleFileChange(e.target.files[0])}
 							/>
 							<div className="flex items-center">
 								<input 
