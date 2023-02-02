@@ -87,8 +87,9 @@ const Home: FC = () => {
 			let proposalsRaw = proposal;
 
 			if (proposals[0].args != undefined) {
-			for( i; i < Number(proposals.length) ; i++) {
-				// console.log("executed:", String(proposals[i].args?.proposalId))
+				// for( i ; i < Number(proposals.length) ; i++) {
+				for( i = 30; i < Number(proposals.length) ; i++) {
+						// console.log("executed:", String(proposals[i].args?.proposalId))
 				console.log("proposals[i]:", proposals[i].args[8][0])
 
 				proposalsRaw.push(...[{

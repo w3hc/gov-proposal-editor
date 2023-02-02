@@ -2,6 +2,9 @@ export const APP_NAME = 'Gov Proposal Editor'
 
 export const TALLY_DAO_NAME = 'abyss-gov'
 
+export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0xBb0a4AC6679bb653311ec9733300372763D879F1"
+export const MEDUSA_ORACLE_CONTRACT_ADDRESS = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
+
 // The <const> assertion enables wagmi to infer the correct types when using the ABI in hooks
 export const govAbi = <const>[
   {
@@ -1891,7 +1894,7 @@ export const meduasaClientAbi = <const>[
   },
   {
     "inputs": [],
-    "name": "InsufficentFunds",
+    "name": "CallerIsNotNftOwner",
     "type": "error"
   },
   {
@@ -1989,24 +1992,6 @@ export const meduasaClientAbi = <const>[
         "indexed": true,
         "internalType": "uint256",
         "name": "cipherId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
         "type": "uint256"
       },
       {
@@ -2153,21 +2138,6 @@ export const meduasaClientAbi = <const>[
       },
       {
         "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
         "name": "uri",
         "type": "string"
       }
@@ -2176,7 +2146,7 @@ export const meduasaClientAbi = <const>[
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "cipherId",
         "type": "uint256"
       }
     ],
@@ -2197,11 +2167,6 @@ export const meduasaClientAbi = <const>[
         "internalType": "address",
         "name": "seller",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
       },
       {
         "internalType": "string",

@@ -1,6 +1,8 @@
 import { Web3Storage } from "web3.storage"
 
-export const UploadFile = async (selectedFile:any) => {
+export const UploadFile = async (selectedFile:any, fileName:any) => {
+
+    console.log("uploding your file...")
 
     function getAccessToken() {
         return process.env.NEXT_PUBLIC_WEB3STORAGE_TOKEN
@@ -19,7 +21,8 @@ export const UploadFile = async (selectedFile:any) => {
     const cid = await storeFile(selectedFile)
 
     console.log("✅ cid:", cid)
-    console.log("✅ url:", "https://" + cid + ".ipfs.w3s.link")
+    console.log("✅ url:", "ipfs://" + cid + "/" + fileName)
 
-    return "https://" + cid + ".ipfs.w3s.link"
+    // return "https://" + cid + ".ipfs.w3s.link"
+    return "ipfs://" + cid + "/" + fileName + ""
 }

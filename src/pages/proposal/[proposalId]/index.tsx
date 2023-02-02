@@ -10,166 +10,145 @@ import Head from 'next/head'
 import Image from 'next/image'
 import {useRouter} from 'next/router'
 import { Inter } from '@next/font/google'
+import { Base64 } from "js-base64";
+import { Medusa, EVMG1Point, SuiteType } from "@medusa-network/medusa-sdk"
 
 const inter = Inter({ subsets: ['latin'] })
-const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
-const provider = new ethers.providers.JsonRpcProvider(endpoint)
 
 const ProposalPage: FC = () => {
 
-	const encrypted:boolean = true
+	const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 
 	const router = useRouter()
     const proposalId = router.query.proposalId as string
+	const [block, setBlock] = useState(0)
 	const tallyLink = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"+proposalId
-	const [selectedFile, setSelectedFile] = useState(null);
+	const [title, setTitle] = useState("")
+	const [description, setDescription] = useState("")
+	// const [state, setState] = useState("")
+	const [selectedFile, setSelectedFile] = useState(null)
+	const [provider, setProvider] = useState(new ethers.providers.JsonRpcProvider(endpoint))
+	const [isEncrypted, setIsEncrypted] = useState(false)
 	const [decryptedFile, setDecryptedFile] = useState("")
-
-	const { data, error, isLoading, refetch } = useSigner()
-	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, provider)
-
-	const [block, setBlock] = useState(0);
-	const [proposal, setProposal] = useState<{id:string; link:string, title: string, state: number, description: string, selectedFile: string}[]>([{
-		id: "12345678",
-		link: "http://link.com",
-		title: "",
-		state: 0, 
-		description: "",
-		selectedFile: ""
-	},]);
 	const [initialized, setInitialized] = useState(false);
 
-	const proposalState = [
-		"Pending",
-		"Active",
-		"Canceled",
-		"Defeated",
-		"Succeeded",
-		"Queued",
-		"Expired",
-		"Executed"
-	]
-	const baseUrl = "/proposal/"
- 
-	useEffect(() => {
-		getBlock();
-	},[]);
+	const { data, error, isLoading, refetch } = useSigner()
+	const signer = data
+	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, provider)
 
-	const decrypt = async (fileToDecrypt:any) => {
-	// const decrypt = async () => {
-		if (encrypted != true) {
+	// const proposalState = [
+	// 	"Pending",
+	// 	"Active",
+	// 	"Canceled",
+	// 	"Defeated",
+	// 	"Succeeded",
+	// 	"Queued",
+	// 	"Expired",
+	// 	"Executed"
+	// ]
 
-
-			// Medusa
-
-
-			setDecryptedFile("https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg") // placeholder
-			return "https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg" // placeholder
-		} else {
-			setDecryptedFile("https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg") // placeholder
-			return "https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg" // placeholder
-		}
-	}
-	
 	const getBlock = async () => {
 		const blockNumber = await provider.getBlockNumber();
 		setBlock(blockNumber);
 	}
 
-	const getState = async (proposalId) => {
-		return await gov.state(proposalId);
+	// const getState = async (proposalId:string) => {
+	// 	return await gov.state(proposalId)
+	// }
+
+	const decrypt = async () => {
+
+		console.log("decrypt triggered...")
+		
+		if (isEncrypted != true) {
+
+			const b64EncryptedData = Base64.fromUint8Array(selectedFile)
+
+			const encryptedData = Base64.toUint8Array(b64EncryptedData); // Only if encryptedData was base64 encoded, then base64 decode
+			
+			// call to buyListing
+
+			/* 
+
+			uint256 cipherId,
+        	G1Point calldata buyerPublicKey
+
+			//////
+			
+			uint256 requestId = oracle.requestReencryption(
+            cipherId,
+            buyerPublicKey
+			);
+			emit NewSale(msg.sender, listing.seller, requestId, cipherId);
+			return requestId;
+
+			*/
+
+			const medusaOracleAddress = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
+			const medusa = await Medusa.init(medusaOracleAddress, signer);
+			console.log("medusa:", medusa)
+
+
+			const decryptedBytes = await medusa.decrypt(
+			  null,
+			  encryptedData,
+			);
+			const plaintext = new TextDecoder().decode(decryptedBytes) // To decode bytes to UTF-8
+
+
+			// return base64
+		
+		} else {
+			// setDecryptedFile("https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg") // placeholder
+			// return "https://ipfs.io/ipfs/Qmc8xVdanhodtSEwCXbYYU3uC6hPGwmdDBbTucLHtLEm3j/nft.jpg" // placeholder
+		}
 	}
+	
+	const getProposalData = useCallback( async () => {
 
-	const getProposals = useCallback( async () => {
 		if (block > 1) {
-		const proposals = await gov.queryFilter("ProposalCreated", 5702215, block);
-		try {
 
-			let i:number = 0;
-			let proposalsRaw = proposal;
+			const proposals = await gov.queryFilter("ProposalCreated", 5702215, block)
 
-			if (proposals[0].args != undefined) {
-				for( i; i < Number(proposals.length) ; i++) {
+			try {
 
-					console.log(String(proposals[i].args[8]))
-					const id = String(proposals[i].args?.proposalId)
+				let i:number = 0;
 
-					if (id == proposalId) {
-						proposalsRaw.push(...[{
-							id: String(proposals[i].args?.proposalId), 
-							link: baseUrl + String(proposals[i].args?.proposalId),
-							title: proposals[i].args[8].substring(proposals[i].args[8][0]=="#" ? 2 : 0, proposals[i].args[8].indexOf("\n")),
-							state: await getState(proposals[i].args?.proposalId), 
-							description: proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")),
-							selectedFile: proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") )
-						}])
-						setSelectedFile(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
-					}	
-				}
-				delete proposal[0];
-				setProposal(proposalsRaw);
-				setInitialized(true);
+				if (proposals[0].args != undefined) {
+
+					for( i; i < Number(proposals.length) ; i++) {
+
+						const id = String(proposals[i].args?.proposalId)
+
+						if (id == proposalId) {
+
+							setTitle(proposals[i].args[8].substring(proposals[i].args[8][0]=="#" ? 2 : 0, proposals[i].args[8].indexOf("\n")))
+							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
+							setSelectedFile(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
+							if (proposals[i].args[8].substring(proposals[i].args[8].indexOf(")")+2) === "encrypted") {
+								setIsEncrypted(true)
+							} else {
+								setIsEncrypted(false)
+							}
+							setInitialized(true)
+							console.log("proposals[i].args[8]:", proposals[i].args[8])
+						}	
+					}
 				}
 			} catch(error) {
-				console.log("error:", error)
+				console.error("error:", error)
 			}
 		}
-	// },[block, proposal, getState, proposalId, gov])
-	},[block, proposal])
+	},[block])
 
 	useEffect(() => {
-		getProposals()
-		if (selectedFile) {
-			decrypt(selectedFile)
-		}
-	// },[getProposals, proposal, decrypt, selectedFile])
-	},[getProposals, proposal])
-
-	function Item(props:any) {
-
-		return (
-			
-			<>
-				<h1 style={{color:"#45a2f8"}}><strong>{props.title}</strong></h1><br />
-				<p><small>Status: { proposalState[props.state]}</small></p>
-				<br />
-
-				<p>{props.description}</p>
-
-				<br />
-
-				{selectedFile ? 
-					
-					(encrypted == false ?
-						<p style={{color:"red"}}>
-						This file is only accessible to the DAO members.
-					</p> : 
-					<p>
-						<Image 
-							width="300" 
-							height="300" 
-							alt={"selectedFile"} 
-							src={ decryptedFile } 
-						/>
-					</p> 
-					)
-					 
-						
-				: <p>No document attached.</p> }
-
-			</> 
-		)
-	} 
-	
-	function List() {
-		return (
-			<>
-				<div>
-					{proposal.map((p) => <Item key={p.id} title={p.title} state={p.state} id={p.id} link={p.link} description={p.description} selectedFile={p.selectedFile}/>)}
-				</div>
-			</>
-		);
-	}
+		getBlock()
+		// getState(proposalId)
+		getProposalData()
+		console.log("selectedFile:", selectedFile)
+		console.log("isEncrypted:", isEncrypted)
+		console.log("initialized:", initialized)
+	},[getProposalData]);
 
 	return (
 		<>
@@ -209,28 +188,70 @@ const ProposalPage: FC = () => {
 									{initialized === true ? 
 
 									<>
+										<div className={inter.className}>
 
-										<div className={inter.className}>									
-											<List />
-										</div>
+											<h1 style={{color:"#45a2f8"}}><strong>{title}</strong></h1><br />
 
-										<br />
-
-										<div className="flex justify-center">
+											{/* <p><small>Status: {state} </small></p> */}
 											
-										<a
-											href={tallyLink}
-											target="_blank" 
-											rel="noopener noreferrer"
-											style={{color:"#45a2f8"}}
-										>
-											<strong>View on Tally</strong>
-										</a>
+											<br />
 
+											<p>{description}</p>
+
+											<br />
+
+											{selectedFile ? 
+												
+												(isEncrypted == true ?
+
+													<>
+
+														<p style={{color:"red"}}>
+														This file is only accessible to the DAO members.
+														</p>
+
+														<div className="flex justify-center">
+															<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-200 border border-pink-500 hover:border-transparent rounded" 
+															onClick={decrypt}>
+															Decrypt
+															</button>  
+														</div>
+													</> : 
+													<> 
+														<Image 
+															width="300" 
+															height="300" 
+															alt={"selectedFile"} 
+															src={ decryptedFile === "" ? selectedFile : decryptedFile } 
+														/>
+													<div className="flex justify-center">
+
+														<button 
+															className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-200 border border-pink-500 hover:border-transparent rounded" 
+															onClick={decrypt}
+														>
+														Decrypt
+														</button>  
+													</div>
+												</> ) : <p>No document attached.</p> }
+			
+											</div>
+
+											<br />
+
+											<div className="flex justify-center">
+												
+											<a
+												href={tallyLink}
+												target="_blank" 
+												rel="noopener noreferrer"
+												style={{color:"#45a2f8"}}
+											>
+												<strong>View on Tally</strong>
+											</a>
 										</div> 
-									
 									</>
-									: <p className={inter.className}>Loading...</p> }
+								: <p className={inter.className}>Loading...</p> }
 								</div>
 							</div>
 						</div>
