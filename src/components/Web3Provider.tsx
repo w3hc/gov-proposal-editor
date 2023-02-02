@@ -1,6 +1,6 @@
 import { useTheme } from 'next-themes'
 import { APP_NAME } from '@/lib/consts'
-import { createClient, WagmiConfig, chain } from 'wagmi'
+import { createClient, WagmiConfig } from 'wagmi'
 import { arbitrumGoerli } from 'wagmi/chains'
 import { ConnectKitProvider, getDefaultClient } from 'connectkit'
 

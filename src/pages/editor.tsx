@@ -4,7 +4,7 @@ import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
 import { govAbi, meduasaClientAbi, TALLY_DAO_NAME, MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, MEDUSA_ORACLE_CONTRACT_ADDRESS } from '../lib/consts'
 import { ethers } from 'ethers';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link'
 import Head from 'next/head'
 import { UploadFile } from '../components/UploadFile'
@@ -31,49 +31,39 @@ const Editor: FC = () => {
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [encryptionRequested, setEncryptionRequested] = useState(true);
 	const [cypherId, setCypherId] = useState(null);
+	const [currentSigner, setCurrentSigner] = useState(null);
+	const [encryptedFileIPFSUrl, setEncryptedFileIPFSUrl] = useState(null);
 	
-	const { data, error, isLoading, refetch } = useSigner()
-	const signer = data
-	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, signer)
+	const { data: signer, isError, isLoading } = useSigner()
 
-	const giveKey = async (encryptedKey:HGamalEVMCipher) => {
+	useEffect(() => {
+		setCurrentSigner(signer)
+	  }, []);
 
-		console.log("giveKey triggered:", encryptedKey)
+	const handleFileInput = async () => {
+		console.log("handleFileInput triggered")
+		console.log("file:", selectedFile)
+		console.log("file name:", selectedFile.name)
+		console.log("encryptionRequested:", encryptionRequested)
 
-		console.log("signer:", signer)
+		if (encryptionRequested === true) {
 
-		const medusaClient = new ethers.Contract(MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, meduasaClientAbi, signer)
+			const encryptedData = await encrypt(selectedFile)
+			console.log("selectedFile.name:", selectedFile.name)
 
-		const price = '1.00'
-		const cid = "dddddd"
-		const num = 1
-		
-		try {
-			const medusaCall =await medusaClient.createListing(
+			const encryptedFileUrl = await UploadData(encryptedData, selectedFile.name)
+			
+			setEncryptedFileIPFSUrl(UploadFile(selectedFile, selectedFile.name))
+			return encryptedFileUrl
 
-				encryptedKey,
-				"hello",
-				"desc desc desc desc desc",
-				num,
-				"ipfs://xxxx"
-
-				,{gasLimit: 42000}
-			)
-	
-			setCypherId(medusaCall)
-			console.log("medusaCall:", medusaCall)
-			// console.log("medusaCall:", medusaCall.receipt )
-		} catch(e) {
-			console.error("error:", e)
-		}		
+		} else {
+			return UploadFile(selectedFile, selectedFile.name)
+		}
 	}
-		
-
-	const encryptSelectedFile = async (selectedFile:any) => {
-
+	const encrypt = async (selectedFile:any) => {
 		console.log("signer:", signer)
 		const medusaOracleAddress = MEDUSA_ORACLE_CONTRACT_ADDRESS
-		const medusa = await Medusa.init(medusaOracleAddress, signer);
+		const medusa = await Medusa.init(medusaOracleAddress, currentSigner);
 		console.log("medusa:", medusa)
 
 		const medusaPublicKey = await medusa.fetchPublicKey()
@@ -86,16 +76,48 @@ const Editor: FC = () => {
     	reader.readAsDataURL(selectedFile)
 
 		reader.onload = async (event) => {
+
 			const buffer = event.target?.result as string
 			const buff = new TextEncoder().encode(buffer)
+			console.log("buffer:", buffer)
+			console.log("buff:", buff)
+			
 			const { encryptedData, encryptedKey } = await medusa.encrypt(
 				buff,
 				MEDUSA_CLIENT_APP_CONTRACT_ADDRESS,
-			);
+			)
+
 			console.log("encryptedData:", encryptedData)
 			console.log("encryptedKey:", encryptedKey)
 
-			await giveKey(encryptedKey)
+			const medusaClient = new ethers.Contract(
+				MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
+				meduasaClientAbi, 
+				currentSigner
+			)
+			
+			try {
+				console.log("[before medusaCall] encryptedKey", encryptedKey)
+				console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
+
+				const medusaCall = await medusaClient.createListing(
+
+					encryptedKey,
+					"placeholder name",
+					"placeholder description",
+					1,
+					encryptedFileIPFSUrl
+
+					,{gasLimit: 80000}
+				)
+
+				console.log("medusaCall:", medusaCall)
+				setCypherId(medusaCall)
+
+				console.log("Arbiscan tx link:", "https://goerli.arbiscan.io/tx/" + medusaCall.hash)
+			} catch(e) {
+				console.error("error:", e)
+			}		
 
 			return encryptedData
 		}
@@ -107,31 +129,17 @@ const Editor: FC = () => {
 		console.log("selectedFile:", selectedFile)
 	}
 
-	const handleFileInput = async () => {
-		console.log("handleFileInput triggered")
-		console.log("file:", selectedFile)
-		console.log("file name:", selectedFile.name)
-		console.log("encryptionRequested:", encryptionRequested)
-
-		if (encryptionRequested === true) {
-
-			const encryptedData = await encryptSelectedFile(selectedFile)
-			console.log("selectedFile.name:", selectedFile.name)
-
-			const encryptedFileUrl = await UploadData(encryptedData, selectedFile.name)
-			console.log("[editor] encryptedFileUrl:", encryptedFileUrl)
-			return encryptedFileUrl
-
-		} else {
-			return UploadFile(selectedFile)
-		}
-	}
-
 	const submitProposal = async (e:any) => {
 		
 		try {
 			
 			e.preventDefault();
+
+			const gov = new ethers.Contract(
+				'0x17BccCC8E7c0DC62453a508988b61850744612F3', 
+				govAbi, 
+				currentSigner
+			)
 
 			const call = "0x"
 			const calldatas = [call.toString()]
@@ -175,6 +183,7 @@ const Editor: FC = () => {
 			const targetURL = "/proposal/"+proposalId
 
 			// router.push(targetURL)
+
 			toast.success(
 				<a
 				  className="inline-flex items-center text-blue-600 hover:underline"
@@ -185,7 +194,7 @@ const Editor: FC = () => {
 				  <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path></svg>
 				</a>
 		
-			  )
+			)
 
 		} catch(e) {
 			console.log("error:", e)
@@ -343,6 +352,7 @@ const Editor: FC = () => {
 					{err == true && 
 						<><br />
 							<div className="flex justify-center">
+								<br />
 								<p className="text-red-500"><strong>You can&apos;t do that, my friend!</strong> 😿</p>
 							</div>
 						</>

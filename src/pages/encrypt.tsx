@@ -1,3 +1,5 @@
+// unused
+
 import { FC } from 'react'
 import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
@@ -12,7 +14,6 @@ import { Medusa } from "@medusa-network/medusa-sdk";
 import { Wallet } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { Base64 } from 'js-base64'
-
 
 const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
 
