@@ -2,7 +2,7 @@ export const APP_NAME = 'Gov Proposal Editor'
 
 export const TALLY_DAO_NAME = 'abyss-gov'
 
-export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0xE78B950eF61b38D049247aC45454834a7999DB68"
+export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x83C2aF658b3E6D0dEFFE7C0d6b59b5d326207491"
 export const MEDUSA_ORACLE_CONTRACT_ADDRESS = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
 
 // The <const> assertion enables wagmi to infer the correct types when using the ABI in hooks
@@ -1898,11 +1898,6 @@ export const meduasaClientAbi = <const>[
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "ListingDoesNotExist",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -2010,12 +2005,6 @@ export const meduasaClientAbi = <const>[
       {
         "indexed": true,
         "internalType": "address",
-        "name": "buyer",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "seller",
         "type": "address"
       },
@@ -2030,6 +2019,12 @@ export const meduasaClientAbi = <const>[
         "internalType": "uint256",
         "name": "cipherId",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "uri",
+        "type": "string"
       }
     ],
     "name": "NewSale",
@@ -2038,9 +2033,9 @@ export const meduasaClientAbi = <const>[
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "cipherId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "_uri",
+        "type": "string"
       },
       {
         "components": [
@@ -2068,7 +2063,7 @@ export const meduasaClientAbi = <const>[
         "type": "uint256"
       }
     ],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -2143,35 +2138,24 @@ export const meduasaClientAbi = <const>[
       }
     ],
     "name": "createListing",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "cipherId",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "",
-        "type": "uint256"
+        "type": "string"
       }
     ],
     "name": "listings",
     "outputs": [
       {
-        "internalType": "address",
-        "name": "seller",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "uri",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -2318,6 +2302,25 @@ export const meduasaClientAbi = <const>[
         "internalType": "struct G1Point",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "requests",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

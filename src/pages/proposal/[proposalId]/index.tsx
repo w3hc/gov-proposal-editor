@@ -2,7 +2,7 @@ import { FC } from 'react'
 import ConnectWallet from '@/components/ConnectWallet'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
-import { govAbi, TALLY_DAO_NAME } from '../../../lib/consts'
+import { govAbi, meduasaClientAbi, TALLY_DAO_NAME, MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, MEDUSA_ORACLE_CONTRACT_ADDRESS } from '../../../lib/consts'
 import { ethers } from 'ethers';
 import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link'
@@ -18,6 +18,7 @@ const inter = Inter({ subsets: ['latin'] })
 const ProposalPage: FC = () => {
 
 	const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
+	// const provider = new ethers.providers.JsonRpcProvider(endpoint)
 
 	const router = useRouter()
     const proposalId = router.query.proposalId as string
@@ -31,6 +32,7 @@ const ProposalPage: FC = () => {
 	const [isEncrypted, setIsEncrypted] = useState(false)
 	const [decryptedFile, setDecryptedFile] = useState("")
 	const [initialized, setInitialized] = useState(false);
+	const [cipherId, setCipherId] = useState(0);
 
 	const { data, error, isLoading, refetch } = useSigner()
 	const signer = data
@@ -47,6 +49,12 @@ const ProposalPage: FC = () => {
 	// 	"Executed"
 	// ]
 
+	const medusaClient = new ethers.Contract(
+		MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
+		meduasaClientAbi, 
+		provider
+	)
+
 	const getBlock = async () => {
 		const blockNumber = await provider.getBlockNumber();
 		setBlock(blockNumber);
@@ -55,6 +63,17 @@ const ProposalPage: FC = () => {
 	// const getState = async (proposalId:string) => {
 	// 	return await gov.state(proposalId)
 	// }
+
+	const getCipherId = async (selectedFile:any) => {
+		console.log("selectedFile:", selectedFile)
+		if (selectedFile) {
+			console.log("[if (selectedFile)] selectedFile:", selectedFile)
+			const cipherId = await medusaClient.listings(selectedFile)
+			
+			setCipherId(cipherId);
+			console.log("getCipherId result:", cipherId)
+		}
+	}
 
 	const decrypt = async () => {
 
@@ -127,6 +146,7 @@ const ProposalPage: FC = () => {
 							setSelectedFile(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							if (proposals[i].args[8].substring(proposals[i].args[8].indexOf(")")+2) === "encrypted") {
 								setIsEncrypted(true)
+								await getCipherId(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							} else {
 								setIsEncrypted(false)
 							}
