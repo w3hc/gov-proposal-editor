@@ -2,7 +2,7 @@ export const APP_NAME = 'Gov Proposal Editor'
 
 export const TALLY_DAO_NAME = 'abyss-gov'
 
-export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x83C2aF658b3E6D0dEFFE7C0d6b59b5d326207491"
+export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x281d3F386A48D31DC65E366081f5E3E3fA49B663"
 export const MEDUSA_ORACLE_CONTRACT_ADDRESS = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
 
 // The <const> assertion enables wagmi to infer the correct types when using the ABI in hooks
@@ -1893,11 +1893,6 @@ export const meduasaClientAbi = <const>[
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "CallerIsNotNftOwner",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -2064,6 +2059,76 @@ export const meduasaClientAbi = <const>[
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ciphers",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "x",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "y",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct G1Point",
+        "name": "random",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "cipher",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "x",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "y",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct G1Point",
+        "name": "random2",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "f",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "e",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct DleqProof",
+        "name": "dleq",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
