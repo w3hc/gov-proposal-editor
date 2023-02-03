@@ -32,7 +32,7 @@ const Editor: FC = () => {
 	const [encryptionRequested, setEncryptionRequested] = useState(true);
 	const [name, setName] = useState(null);
 	const [plaintext, setPlaintext] = useState(null);
-	const [fileToAddInDescription, setFileToAddInDescription] = useState(null);
+	// const [fileToAddInDescription, setFileToAddInDescription] = useState(null);
 	
 	const router = useRouter();
 	const { data: signer, isError, isLoading } = useSigner()
@@ -46,6 +46,7 @@ const Editor: FC = () => {
 		console.log("encryptionRequested:", encryptionRequested)
 
 		let cipherId:any = null
+		let fileToAddInDescription:string = ""
 
 		// checks if the encryption is requested by user
 		if (encryptionRequested === true) {
@@ -76,6 +77,7 @@ const Editor: FC = () => {
 
 				// store that encrypted file
 				const encryptedFileIPFSUrl = await UploadData(encryptedData, name)
+				fileToAddInDescription = encryptedFileIPFSUrl
 
 				// prepare medusa client
 				const medusaClient = new ethers.Contract(
@@ -85,7 +87,7 @@ const Editor: FC = () => {
 				)
 				
 				console.log("[before medusaCall] encryptedKey", encryptedKey)
-				console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
+				// console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
 
 				// medusa call
 				const medusaCall = await medusaClient.createListing(
@@ -98,7 +100,14 @@ const Editor: FC = () => {
 				)
 				console.log("[after medusaCall] medusaCall:", medusaCall)
 				console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + medusaCall.hash)
-				cipherId = medusaCall
+
+				medusaCall.wait(2)
+
+				const filterTx = await medusaClient.queryFilter("NewListing", medusaCall.blockNumber)
+
+				cipherId = filterTx
+
+				console.log("filterTx cipherId:", cipherId)
 			
 			} catch(e) {
 				console.log("error:", e)
@@ -110,9 +119,7 @@ const Editor: FC = () => {
 			console.log("[no encryption] name:", name)
 
 			// if encryption is not requested, upload the file to ipfs
-			setFileToAddInDescription(
-				UploadFile(plaintext, name)
-			)
+			fileToAddInDescription = await UploadFile(plaintext, name)
 		}
 
 		try {
@@ -128,15 +135,14 @@ const Editor: FC = () => {
 			const calldatas = [call.toString()]
 
 			// prepare proposal description
-			let attachedDocumentLink:string
 			let PROPOSAL_DESCRIPTION: string
-			if (fileToAddInDescription) {
+			console.log("fileToAddInDescription:", fileToAddInDescription)
+			console.log("encryptionRequested:", encryptionRequested)
+			if (fileToAddInDescription) { // won't work if no file attached
 
-				attachedDocumentLink = fileToAddInDescription
-				attachedDocumentLink = "await handleFileInput()"
-				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + attachedDocumentLink + ")"
+				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + fileToAddInDescription + ")"
 				if (encryptionRequested) {
-					PROPOSAL_DESCRIPTION += " encrypted:" + (cipherId === null ? "没有" : cipherId)
+					PROPOSAL_DESCRIPTION += " encrypted" /*+ (cipherId === null ? "没有" : cipherId)*/
 				}
 
 			} else {

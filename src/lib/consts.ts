@@ -2,7 +2,7 @@ export const APP_NAME = 'Gov Proposal Editor'
 
 export const TALLY_DAO_NAME = 'abyss-gov'
 
-export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0xBb0a4AC6679bb653311ec9733300372763D879F1"
+export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x281d3F386A48D31DC65E366081f5E3E3fA49B663"
 export const MEDUSA_ORACLE_CONTRACT_ADDRESS = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
 
 // The <const> assertion enables wagmi to infer the correct types when using the ABI in hooks
@@ -1893,16 +1893,6 @@ export const meduasaClientAbi = <const>[
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "CallerIsNotNftOwner",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ListingDoesNotExist",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -2010,12 +2000,6 @@ export const meduasaClientAbi = <const>[
       {
         "indexed": true,
         "internalType": "address",
-        "name": "buyer",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "seller",
         "type": "address"
       },
@@ -2030,6 +2014,12 @@ export const meduasaClientAbi = <const>[
         "internalType": "uint256",
         "name": "cipherId",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "uri",
+        "type": "string"
       }
     ],
     "name": "NewSale",
@@ -2038,9 +2028,9 @@ export const meduasaClientAbi = <const>[
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "cipherId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "_uri",
+        "type": "string"
       },
       {
         "components": [
@@ -2068,7 +2058,77 @@ export const meduasaClientAbi = <const>[
         "type": "uint256"
       }
     ],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ciphers",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "x",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "y",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct G1Point",
+        "name": "random",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "cipher",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "x",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "y",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct G1Point",
+        "name": "random2",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "f",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "e",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct DleqProof",
+        "name": "dleq",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -2143,35 +2203,24 @@ export const meduasaClientAbi = <const>[
       }
     ],
     "name": "createListing",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "cipherId",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "",
-        "type": "uint256"
+        "type": "string"
       }
     ],
     "name": "listings",
     "outputs": [
       {
-        "internalType": "address",
-        "name": "seller",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "uri",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -2318,6 +2367,25 @@ export const meduasaClientAbi = <const>[
         "internalType": "struct G1Point",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "requests",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
