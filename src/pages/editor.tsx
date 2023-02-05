@@ -41,7 +41,7 @@ const Editor: FC = () => {
 		
 		e.preventDefault();
 
-		console.log("handleFileInput triggered")
+		console.log("submitProposal triggered")
 		console.log("file name:", name)
 		console.log("encryptionRequested:", encryptionRequested)
 
@@ -57,7 +57,15 @@ const Editor: FC = () => {
 				const medusa = await Medusa.init(medusaOracleAddress, signer);
 				console.log("medusa:", medusa)
 
+				// prepare medusa client
+				const medusaClient = new ethers.Contract(
+					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
+					meduasaClientAbi, 
+					signer
+				)
+
 				const medusaPublicKey = await medusa.fetchPublicKey()
+				const publicKeyFromMedusaClient = await medusaClient.publicKey()
 				console.log("medusaPublicKey:", medusaPublicKey)
 				const keypair = await medusa.signForKeypair()
 				console.log("keypair:", keypair)
@@ -78,21 +86,25 @@ const Editor: FC = () => {
 				// store that encrypted file
 				const encryptedFileIPFSUrl = await UploadData(encryptedData, name)
 				fileToAddInDescription = encryptedFileIPFSUrl
-
-				// prepare medusa client
-				const medusaClient = new ethers.Contract(
-					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
-					meduasaClientAbi, 
-					signer
-				)
 				
 				console.log("[before medusaCall] encryptedKey", encryptedKey)
 				// console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
+
+				console.log("publicKeyFromMedusaClient:", publicKeyFromMedusaClient)
+
+				let evmPoint = null;
+				if (medusa?.keypair) {
+					const { x, y } = publicKeyFromMedusaClient
+					evmPoint = { x, y }
+				}
 
 				// medusa call
 				const medusaCall = await medusaClient.createListing(
 
 					encryptedKey,
+					// pubKey,
+					// evmPoint,
+					// publicKeyFromMedusaClient,
 					encryptedFileIPFSUrl
 
 					// , {gasLimit:6000000}
@@ -101,13 +113,13 @@ const Editor: FC = () => {
 				console.log("[after medusaCall] medusaCall:", medusaCall)
 				console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + medusaCall.hash)
 
-				medusaCall.wait(2)
+				// medusaCall.wait(2)
 
-				const filterTx = await medusaClient.queryFilter("NewListing", medusaCall.blockNumber)
+				// const filterTx = await medusaClient.queryFilter("NewListing", medusaCall.blockNumber)
 
-				cipherId = filterTx
+				// cipherId = filterTx
 
-				console.log("filterTx cipherId:", cipherId)
+				// console.log("filterTx cipherId:", cipherId)
 			
 			} catch(e) {
 				console.log("error:", e)

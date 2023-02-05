@@ -11,28 +11,45 @@ import Image from 'next/image'
 import {useRouter} from 'next/router'
 import { Inter } from '@next/font/google'
 import { Base64 } from "js-base64";
-import { Medusa, EVMG1Point, HGamalEVMCipher } from "@medusa-network/medusa-sdk"
+import { Medusa, EVMG1Point, SuiteType } from "@medusa-network/medusa-sdk"
+import { HGamalEVMCipher } from '@medusa-network/medusa-sdk'
+import axios from 'axios'
+import { ipfsGatewayLink } from '@/lib2/utils'
 
 const inter = Inter({ subsets: ['latin'] })
 
 const ProposalPage: FC = () => {
 
 	const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
+	// const provider = new ethers.providers.JsonRpcProvider(endpoint)
+
 	const router = useRouter()
     const proposalId = router.query.proposalId as string
-	const { data: signer, isError, isLoading } = useSigner()
-	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, signer)
-	
 	const [block, setBlock] = useState(0)
 	const tallyLink = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"+proposalId
 	const [title, setTitle] = useState("")
 	const [description, setDescription] = useState("")
-	const [uri, setUri] = useState(null)
+	// const [state, setState] = useState("")
+	const [selectedFile, setSelectedFile] = useState(null)
 	const [provider, setProvider] = useState(new ethers.providers.JsonRpcProvider(endpoint))
 	const [isEncrypted, setIsEncrypted] = useState(false)
 	const [decryptedFile, setDecryptedFile] = useState("")
 	const [initialized, setInitialized] = useState(false);
-	// const [cipherId, setCipherId] = useState(0);
+	const [cipherId, setCipherId] = useState(0);
+
+	const { data: signer, isError, isLoading } = useSigner()
+	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, signer)
+
+	// const proposalState = [
+	// 	"Pending",
+	// 	"Active",
+	// 	"Canceled",
+	// 	"Defeated",
+	// 	"Succeeded",
+	// 	"Queued",
+	// 	"Expired",
+	// 	"Executed"
+	// ]
 
 	const medusaClient = new ethers.Contract(
 		MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
@@ -45,102 +62,216 @@ const ProposalPage: FC = () => {
 		setBlock(blockNumber);
 	}
 
+	// const getState = async (proposalId:string) => {
+	// 	return await gov.state(proposalId)
+	// }
+
+	const getCipherId = async (selectedFile:any) => {
+		console.log("selectedFile:", selectedFile)
+		if (selectedFile) {
+			console.log("[if (selectedFile)] selectedFile:", selectedFile)
+			const cipherId = await medusaClient.listings(selectedFile)
+			
+			setCipherId(cipherId);
+			console.log("getCipherId result:", cipherId)
+		}
+	}
+
 	const decrypt = async () => {
 
 		console.log("decrypt triggered...")
-
-		console.log("uri:", uri)
-		console.log("isEncrypted:", isEncrypted)
-		console.log("initialized:", initialized)
 		
 		if (isEncrypted === true) {
+			
+			// call to buyListing
 
-			// Medusa init
+			/* 
+
+			function buyListing(
+				string memory _uri,
+				G1Point calldata buyerPublicKey
+			) external returns (uint256) {
+				// Listing memory listing = listings[uri];
+				// if (listing.seller == address(0)) {
+				//     revert ListingDoesNotExist();
+				// }
+
+				// if (ERC721(nft).balanceOf(msg.sender) < 1) {
+				//     revert InsufficentFunds();
+				// }
+				(bool success, bytes memory check) = nft.call(
+					abi.encodeWithSignature("balanceOf(address)", msg.sender)
+				);
+
+				if (!success || check[0] == 0) {
+					revert CallerIsNotNftOwner();
+				}
+
+				// _asyncTransfer(listing.seller, msg.value);
+				uint256 requestId = oracle.requestReencryption(
+					listings[_uri],
+					buyerPublicKey
+				);
+				// emit NewSale(msg.sender, requestId, listings[_uri], _uri);
+				requests[_uri] = requestId;
+				return requestId;
+			}
+
+			*/
+
 			const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer)
 			console.log("medusa init:", medusa)
 
-			// handle buyerPublicKey
+			const medusaPublicKey = await medusa.fetchPublicKey()
+			console.log("medusaPublicKey:", medusaPublicKey)
+
 			const keypair = await medusa.signForKeypair()
-			const { x, y } = keypair.pubkey.toEvm()
-    		const evmPoint = { x, y }
-			const buyerPublicKey:EVMG1Point = evmPoint
+
+			console.log("medusa.keypair:", medusa.keypair) // no need
+
+			// const { private, public } = await medusa.generateKeypair();
+
+			// public.toEvm()
+
+			const publicKeyFromContract = await medusaClient.publicKey()
+			// console.log("publicKeyFromContract:", publicKeyFromContract)
+
+			// console.log("keypair:", keypair)
+			// console.log("keypair.secret:", keypair.secret)
+			// console.log("medusa.keypair:", medusa.keypair)
+
+			const uri = selectedFile
+			// const buyerPublicKey = medusaPublicKey
+
+			// const { x, y } = keypair.pubkey.toEvm()
+    		// const evmPoint = { x, y }
+
+			// const buyerPublicKey = publicKeyFromContract
+			const buyerPublicKey = keypair.pubkey
+
+			console.log("uri:", uri)
 			console.log("buyerPublicKey:", buyerPublicKey)
 
-			// calling buyListing (client app contract)
+			// string memory _uri, G1Point calldata buyerPublicKey
 			const buyListing = await medusaClient.buyListing(
 
 				uri,
-				buyerPublicKey
-				,{gasLimit: 1000000}
-
+				buyerPublicKey.toEvm()
+				, {
+					// value: 1,
+					gasLimit: 1000000
+				}
 			)
 			console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + buyListing.hash)
-			// console.log("buyListing:", buyListing)
 
-			// get listing id
-			// let listingId = null
-			// try {
-			// 	listingId = await medusaClient.listings(uri)
-			// } catch (error) {
-			// 	console.error('Error decrypt: ', error)
-			// }
-			// console.log("listingId:", listingId)
-			// const listingIdFormatted = parseInt(listingId)
-			// console.log("listingFormatted:", listingIdFormatted)
+			console.log("buyListing:", buyListing)
 
-			// get the request ID
-			let requestId = null
-			try {
-				requestId = await medusaClient.requests(uri)
-			} catch (error) {
-				console.error('Error decrypt: ', error)
-			}
-			console.log("requestId:", requestId)
-			
-			const requestIdFormatted = parseInt(requestId)
-			console.log("requestIdFormatted:", requestIdFormatted)
+			// get requestId
 
-			// get cipher
-			// const ciphertext = await medusaClient.ciphers(requestIdFormatted)
-			const ciphertext = await medusaClient.ciphers(requestIdFormatted)
-			console.log("ciphertext:", ciphertext )
+			const getRequestId = await medusaClient.requests(
 
-			// download and format encryptedFile
-			const response = await fetch(uri)
+				uri
+
+			)
+			console.log("getRequestId:", getRequestId)
+
+
+
+			// At this point, the encryptedKey should be submitted to Medusa as ciphertext.
+			// The encryptedData should be stored in a public store like ipfs / Filecoin / Arweave / AWS s3 etc.
+
+			// At a later point, another user would request the encryptedKey to be reencrypted towards themself
+			// If that request is valid according to the application's access control policy,
+			// the user will fetch the reencrypted key as ciphertext
+			// The application should also fetch the encryptedContents from the data store
+
+			// Decrypt encryptedContents using reencrypted ciphertext from Medusa
+			// If a user has not signed a message for Medusa yet,
+			// this will prompt them to sign a message in order to retrieve their Medusa private key
+
+
+			const ciphertext = await medusaClient.ciphers(getRequestId)
+			console.log("ciphertext:", ciphertext)
+
+			let encryptedData = null
+
+			console.log("Downloading encrypted content from ipfs")
+			// const ipfsDownload = ipfsGatewayLink(selectedFile)
+			const response = await fetch(selectedFile)
 			const encryptedContents = Base64.toUint8Array(await response.text())
-			// const encryptedContents = new Uint8Array(response)
-			console.log("encryptedContents:", encryptedContents)
 
-			// decrypt
-			let decryptedBytes = null
+			// try {
+			// 	const result = await axios.get(selectedFile);
+			// 	console.log('result:', result);
+
+			// 	encryptedData = result.data
+			// 	console.log('[result.data.result] encryptedData:', encryptedData);
+
+
+			// } catch (error) {
+			// 	console.error('Error getUri: ', error);
+			// }
+
+
 			try {
 
 				const blob = encryptedContents
 
-				decryptedBytes = await medusa.decrypt(
+				const decryptedBytes = await medusa.decrypt(
 
 					ciphertext, // encryptedKey
 					blob, // encrypted data/file
 	
 				)
+	
+				// console.log('decryptedBytes:', decryptedBytes)
+				// const b64EncryptedData = Base64.fromUint8Array(decryptedBytes)
+				// setDecryptedFile(b64EncryptedData)
+
 			} catch (error) {
 				console.error('Error decrypt: ', error);
 			}
 
-			console.log("decryptedBytes:", decryptedBytes)
-			if (decryptedBytes) {
-				const plaintext = new TextDecoder().decode(decryptedBytes)
-				setDecryptedFile(plaintext)
-			}
+
+			// setIsEncrypted(false)
 			
+
+			// setDecryptedFile(decryptedBytes) // placeholder
+
+			// const reader = new FileReader()
+			// reader.readAsDataURL(selectedFile)
+			// reader.onload = async (event) => {
+			// 	const plaintext = event.target?.result as Uint8Array
+
+			// 	const encryptedData = new Uint8Array(plaintext)
+
+			// 	const decryptedBytes = await medusa.decrypt(
+
+			// 	ciphertext, // encryptedKey
+			// 	encryptedData, // encrypted data/file
+
+			// )
+			// console.log('decryptedBytes:', decryptedBytes);
+
+
+			
+
+			// }
+			// reader.onerror = (error) => {
+			// console.log('File Input Error: ', error);
+			// }
+
+			
+			// const plaintext = new TextDecoder().decode(decryptedBytes) // To decode bytes to UTF-8
+
+			// setDecryptedFile(plaintext) // placeholder
+		
 		} else {
-			setDecryptedFile(uri)
+			setDecryptedFile(selectedFile) // placeholder
 		}
 	}
 	
 	const getProposalData = useCallback( async () => {
-
-		getBlock()
 
 		if (block > 1) {
 
@@ -160,9 +291,10 @@ const ProposalPage: FC = () => {
 
 							setTitle(proposals[i].args[8].substring(proposals[i].args[8][0]=="#" ? 2 : 0, proposals[i].args[8].indexOf("\n")))
 							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
-							setUri(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
+							setSelectedFile(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							if (proposals[i].args[8].substring(proposals[i].args[8].indexOf(")")+2) === "encrypted") {
 								setIsEncrypted(true)
+								await getCipherId(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							} else {
 								setIsEncrypted(false)
 							}
@@ -178,7 +310,12 @@ const ProposalPage: FC = () => {
 	},[block])
 
 	useEffect(() => {
+		getBlock()
+		// getState(proposalId)
 		getProposalData()
+		console.log("selectedFile:", selectedFile)
+		console.log("isEncrypted:", isEncrypted)
+		console.log("initialized:", initialized)
 	},[getProposalData]);
 
 	return (
@@ -231,7 +368,7 @@ const ProposalPage: FC = () => {
 
 											<br />
 
-											{uri ? 
+											{selectedFile ? 
 												
 												(isEncrypted == true ?
 
@@ -252,8 +389,8 @@ const ProposalPage: FC = () => {
 														<Image 
 															width="300" 
 															height="300" 
-															alt={"uri"} 
-															src={ decryptedFile === "" ? uri : decryptedFile } 
+															alt={"selectedFile"} 
+															src={ decryptedFile === "" ? selectedFile : decryptedFile } 
 														/>
 														
 													<div className="flex justify-center">
