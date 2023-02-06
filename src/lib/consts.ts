@@ -2,7 +2,7 @@ export const APP_NAME = 'Gov Proposal Editor'
 
 export const TALLY_DAO_NAME = 'abyss-gov'
 
-export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x281d3F386A48D31DC65E366081f5E3E3fA49B663"
+export const MEDUSA_CLIENT_APP_CONTRACT_ADDRESS = "0x0eEE41a9efC4aaCfAF68B647b7d0c61F45047010"
 export const MEDUSA_ORACLE_CONTRACT_ADDRESS = "0xf1d5A4481F44fe0818b6E7Ef4A60c0c9b29E3118"
 
 // The <const> assertion enables wagmi to infer the correct types when using the ABI in hooks
@@ -1890,6 +1890,11 @@ export const meduasaClientAbi = <const>[
   {
     "inputs": [],
     "name": "CallbackNotAuthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ListingDoesNotExist",
     "type": "error"
   },
   {

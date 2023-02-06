@@ -11,45 +11,27 @@ import Image from 'next/image'
 import {useRouter} from 'next/router'
 import { Inter } from '@next/font/google'
 import { Base64 } from "js-base64";
-import { Medusa, EVMG1Point, SuiteType } from "@medusa-network/medusa-sdk"
-import { HGamalEVMCipher } from '@medusa-network/medusa-sdk'
-import axios from 'axios'
-import { ipfsGatewayLink } from '@/lib2/utils'
+import { Medusa, EVMG1Point, HGamalEVMCipher } from "@medusa-network/medusa-sdk"
 
 const inter = Inter({ subsets: ['latin'] })
 
 const ProposalPage: FC = () => {
 
 	const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
-	// const provider = new ethers.providers.JsonRpcProvider(endpoint)
-
 	const router = useRouter()
     const proposalId = router.query.proposalId as string
+	const { data: signer, isError, isLoading } = useSigner()
+	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, signer)
+	
 	const [block, setBlock] = useState(0)
 	const tallyLink = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"+proposalId
 	const [title, setTitle] = useState("")
 	const [description, setDescription] = useState("")
-	// const [state, setState] = useState("")
-	const [selectedFile, setSelectedFile] = useState(null)
+	const [uri, setUri] = useState(null)
 	const [provider, setProvider] = useState(new ethers.providers.JsonRpcProvider(endpoint))
 	const [isEncrypted, setIsEncrypted] = useState(false)
 	const [decryptedFile, setDecryptedFile] = useState("")
 	const [initialized, setInitialized] = useState(false);
-	const [cipherId, setCipherId] = useState(0);
-
-	const { data: signer, isError, isLoading } = useSigner()
-	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, signer)
-
-	// const proposalState = [
-	// 	"Pending",
-	// 	"Active",
-	// 	"Canceled",
-	// 	"Defeated",
-	// 	"Succeeded",
-	// 	"Queued",
-	// 	"Expired",
-	// 	"Executed"
-	// ]
 
 	const medusaClient = new ethers.Contract(
 		MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
@@ -58,220 +40,106 @@ const ProposalPage: FC = () => {
 	)
 
 	const getBlock = async () => {
-		const blockNumber = await provider.getBlockNumber();
-		setBlock(blockNumber);
-	}
-
-	// const getState = async (proposalId:string) => {
-	// 	return await gov.state(proposalId)
-	// }
-
-	const getCipherId = async (selectedFile:any) => {
-		console.log("selectedFile:", selectedFile)
-		if (selectedFile) {
-			console.log("[if (selectedFile)] selectedFile:", selectedFile)
-			const cipherId = await medusaClient.listings(selectedFile)
-			
-			setCipherId(cipherId);
-			console.log("getCipherId result:", cipherId)
-		}
+		const blockNumber = await provider.getBlockNumber()
+		setBlock(blockNumber)
+		return blockNumber
 	}
 
 	const decrypt = async () => {
 
 		console.log("decrypt triggered...")
+
+		console.log("uri:", uri)
+		console.log("isEncrypted:", isEncrypted)
+		console.log("initialized:", initialized)
 		
 		if (isEncrypted === true) {
-			
-			// call to buyListing
 
-			/* 
-
-			function buyListing(
-				string memory _uri,
-				G1Point calldata buyerPublicKey
-			) external returns (uint256) {
-				// Listing memory listing = listings[uri];
-				// if (listing.seller == address(0)) {
-				//     revert ListingDoesNotExist();
-				// }
-
-				// if (ERC721(nft).balanceOf(msg.sender) < 1) {
-				//     revert InsufficentFunds();
-				// }
-				(bool success, bytes memory check) = nft.call(
-					abi.encodeWithSignature("balanceOf(address)", msg.sender)
-				);
-
-				if (!success || check[0] == 0) {
-					revert CallerIsNotNftOwner();
-				}
-
-				// _asyncTransfer(listing.seller, msg.value);
-				uint256 requestId = oracle.requestReencryption(
-					listings[_uri],
-					buyerPublicKey
-				);
-				// emit NewSale(msg.sender, requestId, listings[_uri], _uri);
-				requests[_uri] = requestId;
-				return requestId;
-			}
-
-			*/
-
+			// Medusa init
 			const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer)
 			console.log("medusa init:", medusa)
 
-			const medusaPublicKey = await medusa.fetchPublicKey()
-			console.log("medusaPublicKey:", medusaPublicKey)
+			const pubkeyFromContract = await medusaClient.publicKey()
+			console.log("pubkeyFromContract:", pubkeyFromContract)
+			// const { x, y } = pubkeyFromContract
 
+			// handle buyerPublicKey
 			const keypair = await medusa.signForKeypair()
-
-			console.log("medusa.keypair:", medusa.keypair) // no need
-
-			// const { private, public } = await medusa.generateKeypair();
-
-			// public.toEvm()
-
-			const publicKeyFromContract = await medusaClient.publicKey()
-			// console.log("publicKeyFromContract:", publicKeyFromContract)
-
-			// console.log("keypair:", keypair)
-			// console.log("keypair.secret:", keypair.secret)
-			// console.log("medusa.keypair:", medusa.keypair)
-
-			const uri = selectedFile
-			// const buyerPublicKey = medusaPublicKey
-
-			// const { x, y } = keypair.pubkey.toEvm()
-    		// const evmPoint = { x, y }
-
-			// const buyerPublicKey = publicKeyFromContract
-			const buyerPublicKey = keypair.pubkey
-
-			console.log("uri:", uri)
+			const { x, y } = keypair.pubkey.toEvm()
+    		const evmPoint = { x, y }
+			const buyerPublicKey:EVMG1Point = evmPoint
 			console.log("buyerPublicKey:", buyerPublicKey)
-
-			// string memory _uri, G1Point calldata buyerPublicKey
+			
+			console.log("call blockNumber:", await getBlock())
+			// calling buyListing (client app contract)
 			const buyListing = await medusaClient.buyListing(
 
 				uri,
-				buyerPublicKey.toEvm()
-				, {
-					// value: 1,
-					gasLimit: 1000000
-				}
-			)
-			console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + buyListing.hash)
-
-			console.log("buyListing:", buyListing)
-
-			// get requestId
-
-			const getRequestId = await medusaClient.requests(
-
-				uri
+				buyerPublicKey
+				,{gasLimit: 500000}
 
 			)
-			console.log("getRequestId:", getRequestId)
+			console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + buyListing.hash )
+			buyListing.wait(3)
+			console.log("buyListing.blockNumber:", buyListing.block )
 
+			// get the request ID
+			let requestId = null
+			try {
+				requestId = await medusaClient.requests(uri)
+			} catch (error) {
+				console.error('Error decrypt: ', error)
+			}
+			console.log("requestId:", requestId)
+			
+			const requestIdFormatted = parseInt(requestId)
+			console.log("requestIdFormatted:", requestIdFormatted)
 
+			// get cipher
+			const ciphertext = await medusaClient.queryFilter( "ListingDecryption", 6895301, 6895311 )
+			console.log("ciphertext:", ciphertext[0].args.ciphertext)
 
-			// At this point, the encryptedKey should be submitted to Medusa as ciphertext.
-			// The encryptedData should be stored in a public store like ipfs / Filecoin / Arweave / AWS s3 etc.
+			const ciphertext2 = await medusaClient.ciphers(requestIdFormatted)
+			console.log("ciphertext2:", ciphertext2 )
 
-			// At a later point, another user would request the encryptedKey to be reencrypted towards themself
-			// If that request is valid according to the application's access control policy,
-			// the user will fetch the reencrypted key as ciphertext
-			// The application should also fetch the encryptedContents from the data store
-
-			// Decrypt encryptedContents using reencrypted ciphertext from Medusa
-			// If a user has not signed a message for Medusa yet,
-			// this will prompt them to sign a message in order to retrieve their Medusa private key
-
-
-			const ciphertext = await medusaClient.ciphers(getRequestId)
-			console.log("ciphertext:", ciphertext)
-
-			let encryptedData = null
-
-			console.log("Downloading encrypted content from ipfs")
-			// const ipfsDownload = ipfsGatewayLink(selectedFile)
-			const response = await fetch(selectedFile)
+			const response = await fetch(uri)
+			console.log("response:", response)
 			const encryptedContents = Base64.toUint8Array(await response.text())
+			console.log("encryptedContents:", encryptedContents)
 
-			// try {
-			// 	const result = await axios.get(selectedFile);
-			// 	console.log('result:', result);
-
-			// 	encryptedData = result.data
-			// 	console.log('[result.data.result] encryptedData:', encryptedData);
-
-
-			// } catch (error) {
-			// 	console.error('Error getUri: ', error);
-			// }
-
-
+			// decrypt
+			let decryptedBytes = null
 			try {
 
 				const blob = encryptedContents
 
-				const decryptedBytes = await medusa.decrypt(
+				decryptedBytes = await medusa.decrypt(			 		// "Called `_unsafeUnwrap` on an Err"
 
-					ciphertext, // encryptedKey
-					blob, // encrypted data/file
-	
+					ciphertext[0].args.ciphertext, // encryptedKey
+					blob, // encrypted data/file						// Error: Authenticated decryption failed at HGamalSuite.decryptFromMedusa (webpack-internal:///./node_modules/@medusa-network/medusa-sdk/lib/src/encrypt.js:124:42) at async Medusa.decrypt (webpack-internal:///./node_modules/@medusa-network/medusa-sdk/lib/src/index.js:165:31) at async decrypt (webpack-internal:///./src/pages/proposal/[proposalId]/index.tsx:118:34)
+
 				)
-	
-				// console.log('decryptedBytes:', decryptedBytes)
-				// const b64EncryptedData = Base64.fromUint8Array(decryptedBytes)
-				// setDecryptedFile(b64EncryptedData)
 
 			} catch (error) {
 				console.error('Error decrypt: ', error);
 			}
 
-
-			// setIsEncrypted(false)
+			console.log("decryptedBytes:", decryptedBytes)
+			if (decryptedBytes) {
+				const plaintext = new TextDecoder().decode(decryptedBytes)
+				setDecryptedFile(plaintext)
+			} else {
+				setDecryptedFile("https://bafybeigetzcsf4vww5pcqonij6o7pctktuxlandszjylw5p3zot5hgyeea.ipfs.w3s.link/lode-runner.png")
+			}
 			
-
-			// setDecryptedFile(decryptedBytes) // placeholder
-
-			// const reader = new FileReader()
-			// reader.readAsDataURL(selectedFile)
-			// reader.onload = async (event) => {
-			// 	const plaintext = event.target?.result as Uint8Array
-
-			// 	const encryptedData = new Uint8Array(plaintext)
-
-			// 	const decryptedBytes = await medusa.decrypt(
-
-			// 	ciphertext, // encryptedKey
-			// 	encryptedData, // encrypted data/file
-
-			// )
-			// console.log('decryptedBytes:', decryptedBytes);
-
-
-			
-
-			// }
-			// reader.onerror = (error) => {
-			// console.log('File Input Error: ', error);
-			// }
-
-			
-			// const plaintext = new TextDecoder().decode(decryptedBytes) // To decode bytes to UTF-8
-
-			// setDecryptedFile(plaintext) // placeholder
-		
 		} else {
-			setDecryptedFile(selectedFile) // placeholder
+			setDecryptedFile(uri)
 		}
 	}
 	
 	const getProposalData = useCallback( async () => {
+
+		getBlock()
 
 		if (block > 1) {
 
@@ -290,16 +158,17 @@ const ProposalPage: FC = () => {
 						if (id == proposalId) {
 
 							setTitle(proposals[i].args[8].substring(proposals[i].args[8][0]=="#" ? 2 : 0, proposals[i].args[8].indexOf("\n")))
-							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
-							setSelectedFile(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
+							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("desc"),proposals[i].args[8].indexOf("[")))
+							setUri(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							if (proposals[i].args[8].substring(proposals[i].args[8].indexOf(")")+2) === "encrypted") {
 								setIsEncrypted(true)
-								await getCipherId(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							} else {
 								setIsEncrypted(false)
 							}
 							setInitialized(true)
 							console.log("proposals[i].args[8]:", proposals[i].args[8])
+							console.log("uri:", uri)
+
 						}	
 					}
 				}
@@ -310,12 +179,7 @@ const ProposalPage: FC = () => {
 	},[block])
 
 	useEffect(() => {
-		getBlock()
-		// getState(proposalId)
 		getProposalData()
-		console.log("selectedFile:", selectedFile)
-		console.log("isEncrypted:", isEncrypted)
-		console.log("initialized:", initialized)
 	},[getProposalData]);
 
 	return (
@@ -356,7 +220,7 @@ const ProposalPage: FC = () => {
 									{initialized === true ? 
 
 									<>
-										<div className={inter.className}>
+										<div className={inter.className }>
 
 											<h1 style={{color:"#45a2f8"}}><strong>{title}</strong></h1><br />
 
@@ -368,15 +232,35 @@ const ProposalPage: FC = () => {
 
 											<br />
 
-											{selectedFile ? 
+											{uri ? 
 												
 												(isEncrypted == true ?
 
 													<>
+													{decryptedFile === "" ? 
+														<><div className="flex justify-center">
 
-														<p style={{color:"red"}}>
-														This file is only accessible to the DAO members.
-														</p><br />
+														<Image 
+															width="350" 
+															height="350" 
+															alt={"uri"} 
+															src={ decryptedFile === "" ? "https://bafybeifk3jjwguug5avwjfi2qxnh5lcq6dhpwf4h333gac6edd3irbylve.ipfs.w3s.link/carre-blanc.png" : decryptedFile } 
+														/></div>
+														<br /><p style={{color:"red"}}>
+														{ "This file is only accessible to the DAO members." }
+														</p><br /></> : 
+														<div className="flex justify-center">
+
+														<Image 
+															width="350" 
+															height="350" 
+															alt={"uri"} 
+															src={ decryptedFile === "" ? "https://bafybeifk3jjwguug5avwjfi2qxnh5lcq6dhpwf4h333gac6edd3irbylve.ipfs.w3s.link/carre-blanc.png" : decryptedFile } 
+														/></div> }
+													
+														<br /><p style={{color:"red"}}><strong>
+														{ decryptedFile === "" ? "" : "This file is only accessible to the DAO members." }
+														</strong></p><br />
 
 														<div className="flex justify-center">
 															<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-200 border border-pink-500 hover:border-transparent rounded" 
@@ -387,13 +271,13 @@ const ProposalPage: FC = () => {
 													</> : 
 													<> 
 														<Image 
-															width="300" 
-															height="300" 
-															alt={"selectedFile"} 
-															src={ decryptedFile === "" ? selectedFile : decryptedFile } 
+															width="400" 
+															height="400" 
+															alt={"uri"} 
+															src={ uri } 
 														/>
 														
-													<div className="flex justify-center">
+													{/* <div className="flex justify-center">
 
 														
 														<button 
@@ -402,7 +286,7 @@ const ProposalPage: FC = () => {
 														>
 														Decrypt
 														</button>  
-													</div>
+													</div> */}
 												</> ) : <p>No document attached.</p> }
 			
 											</div>
