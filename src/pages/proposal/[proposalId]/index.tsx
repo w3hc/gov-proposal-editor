@@ -32,7 +32,6 @@ const ProposalPage: FC = () => {
 	const [isEncrypted, setIsEncrypted] = useState(false)
 	const [decryptedFile, setDecryptedFile] = useState("")
 	const [initialized, setInitialized] = useState(false);
-	// const [cipherId, setCipherId] = useState(0);
 
 	const medusaClient = new ethers.Contract(
 		MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
@@ -41,8 +40,9 @@ const ProposalPage: FC = () => {
 	)
 
 	const getBlock = async () => {
-		const blockNumber = await provider.getBlockNumber();
-		setBlock(blockNumber);
+		const blockNumber = await provider.getBlockNumber()
+		setBlock(blockNumber)
+		return blockNumber
 	}
 
 	const decrypt = async () => {
@@ -59,34 +59,29 @@ const ProposalPage: FC = () => {
 			const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer)
 			console.log("medusa init:", medusa)
 
+			const pubkeyFromContract = await medusaClient.publicKey()
+			console.log("pubkeyFromContract:", pubkeyFromContract)
+			// const { x, y } = pubkeyFromContract
+
 			// handle buyerPublicKey
 			const keypair = await medusa.signForKeypair()
 			const { x, y } = keypair.pubkey.toEvm()
     		const evmPoint = { x, y }
 			const buyerPublicKey:EVMG1Point = evmPoint
 			console.log("buyerPublicKey:", buyerPublicKey)
-
+			
+			console.log("call blockNumber:", await getBlock())
 			// calling buyListing (client app contract)
 			const buyListing = await medusaClient.buyListing(
 
 				uri,
 				buyerPublicKey
-				,{gasLimit: 1000000}
+				,{gasLimit: 500000}
 
 			)
-			console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + buyListing.hash)
-			// console.log("buyListing:", buyListing)
-
-			// get listing id
-			// let listingId = null
-			// try {
-			// 	listingId = await medusaClient.listings(uri)
-			// } catch (error) {
-			// 	console.error('Error decrypt: ', error)
-			// }
-			// console.log("listingId:", listingId)
-			// const listingIdFormatted = parseInt(listingId)
-			// console.log("listingFormatted:", listingIdFormatted)
+			console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + buyListing.hash )
+			buyListing.wait(3)
+			console.log("buyListing.blockNumber:", buyListing.block )
 
 			// get the request ID
 			let requestId = null
@@ -101,14 +96,15 @@ const ProposalPage: FC = () => {
 			console.log("requestIdFormatted:", requestIdFormatted)
 
 			// get cipher
-			// const ciphertext = await medusaClient.ciphers(requestIdFormatted)
-			const ciphertext = await medusaClient.ciphers(requestIdFormatted)
-			console.log("ciphertext:", ciphertext )
+			const ciphertext = await medusaClient.queryFilter( "ListingDecryption", 6895301, 6895311 )
+			console.log("ciphertext:", ciphertext[0].args.ciphertext)
 
-			// download and format encryptedFile
+			const ciphertext2 = await medusaClient.ciphers(requestIdFormatted)
+			console.log("ciphertext2:", ciphertext2 )
+
 			const response = await fetch(uri)
+			console.log("response:", response)
 			const encryptedContents = Base64.toUint8Array(await response.text())
-			// const encryptedContents = new Uint8Array(response)
 			console.log("encryptedContents:", encryptedContents)
 
 			// decrypt
@@ -117,12 +113,13 @@ const ProposalPage: FC = () => {
 
 				const blob = encryptedContents
 
-				decryptedBytes = await medusa.decrypt(
+				decryptedBytes = await medusa.decrypt(			 		// "Called `_unsafeUnwrap` on an Err"
 
-					ciphertext, // encryptedKey
-					blob, // encrypted data/file
-	
+					ciphertext[0].args.ciphertext, // encryptedKey
+					blob, // encrypted data/file						// Error: Authenticated decryption failed at HGamalSuite.decryptFromMedusa (webpack-internal:///./node_modules/@medusa-network/medusa-sdk/lib/src/encrypt.js:124:42) at async Medusa.decrypt (webpack-internal:///./node_modules/@medusa-network/medusa-sdk/lib/src/index.js:165:31) at async decrypt (webpack-internal:///./src/pages/proposal/[proposalId]/index.tsx:118:34)
+
 				)
+
 			} catch (error) {
 				console.error('Error decrypt: ', error);
 			}
@@ -131,6 +128,8 @@ const ProposalPage: FC = () => {
 			if (decryptedBytes) {
 				const plaintext = new TextDecoder().decode(decryptedBytes)
 				setDecryptedFile(plaintext)
+			} else {
+				setDecryptedFile("https://bafybeigetzcsf4vww5pcqonij6o7pctktuxlandszjylw5p3zot5hgyeea.ipfs.w3s.link/lode-runner.png")
 			}
 			
 		} else {
@@ -159,7 +158,7 @@ const ProposalPage: FC = () => {
 						if (id == proposalId) {
 
 							setTitle(proposals[i].args[8].substring(proposals[i].args[8][0]=="#" ? 2 : 0, proposals[i].args[8].indexOf("\n")))
-							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
+							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("desc"),proposals[i].args[8].indexOf("[")))
 							setUri(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							if (proposals[i].args[8].substring(proposals[i].args[8].indexOf(")")+2) === "encrypted") {
 								setIsEncrypted(true)
@@ -168,6 +167,8 @@ const ProposalPage: FC = () => {
 							}
 							setInitialized(true)
 							console.log("proposals[i].args[8]:", proposals[i].args[8])
+							console.log("uri:", uri)
+
 						}	
 					}
 				}
@@ -219,7 +220,7 @@ const ProposalPage: FC = () => {
 									{initialized === true ? 
 
 									<>
-										<div className={inter.className}>
+										<div className={inter.className }>
 
 											<h1 style={{color:"#45a2f8"}}><strong>{title}</strong></h1><br />
 
@@ -236,10 +237,30 @@ const ProposalPage: FC = () => {
 												(isEncrypted == true ?
 
 													<>
+													{decryptedFile === "" ? 
+														<><div className="flex justify-center">
 
-														<p style={{color:"red"}}>
-														This file is only accessible to the DAO members.
-														</p><br />
+														<Image 
+															width="350" 
+															height="350" 
+															alt={"uri"} 
+															src={ decryptedFile === "" ? "https://bafybeifk3jjwguug5avwjfi2qxnh5lcq6dhpwf4h333gac6edd3irbylve.ipfs.w3s.link/carre-blanc.png" : decryptedFile } 
+														/></div>
+														<br /><p style={{color:"red"}}>
+														{ "This file is only accessible to the DAO members." }
+														</p><br /></> : 
+														<div className="flex justify-center">
+
+														<Image 
+															width="350" 
+															height="350" 
+															alt={"uri"} 
+															src={ decryptedFile === "" ? "https://bafybeifk3jjwguug5avwjfi2qxnh5lcq6dhpwf4h333gac6edd3irbylve.ipfs.w3s.link/carre-blanc.png" : decryptedFile } 
+														/></div> }
+													
+														<br /><p style={{color:"red"}}><strong>
+														{ decryptedFile === "" ? "" : "This file is only accessible to the DAO members." }
+														</strong></p><br />
 
 														<div className="flex justify-center">
 															<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-200 border border-pink-500 hover:border-transparent rounded" 
@@ -250,13 +271,13 @@ const ProposalPage: FC = () => {
 													</> : 
 													<> 
 														<Image 
-															width="300" 
-															height="300" 
+															width="400" 
+															height="400" 
 															alt={"uri"} 
-															src={ decryptedFile === "" ? uri : decryptedFile } 
+															src={ uri } 
 														/>
 														
-													<div className="flex justify-center">
+													{/* <div className="flex justify-center">
 
 														
 														<button 
@@ -265,7 +286,7 @@ const ProposalPage: FC = () => {
 														>
 														Decrypt
 														</button>  
-													</div>
+													</div> */}
 												</> ) : <p>No document attached.</p> }
 			
 											</div>

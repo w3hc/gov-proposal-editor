@@ -27,15 +27,16 @@ const Editor: FC = () => {
 	const [title, setTitle] = useState("")
 	// const [beneficiary, setBeneficiary] = useState("")
 	const [beneficiary, setBeneficiary] = useState("0xD8a394e7d7894bDF2C57139fF17e5CBAa29Dd977")
-	// const [description, setDescription] = useState("")
-	const [description, setDescription] = useState(title)
-	const [encryptionRequested, setEncryptionRequested] = useState(true);
+	const [description, setDescription] = useState("")
+	// const [description, setDescription] = useState(title)
+	// const [encryptionRequested, setEncryptionRequested] = useState(true);
+	const [encryptionRequested, setEncryptionRequested] = useState(false);
 	const [name, setName] = useState(null);
 	const [plaintext, setPlaintext] = useState(null);
 	// const [fileToAddInDescription, setFileToAddInDescription] = useState(null);
 	
 	const router = useRouter();
-	const { data: signer, isError, isLoading } = useSigner()
+	const { data: signer, isError, isLoading  } = useSigner({  onError(error) {  console.log('my Error', error)   },   })
 
 	const submitProposal = async (e:any) => {
 		
@@ -45,16 +46,13 @@ const Editor: FC = () => {
 		console.log("file name:", name)
 		console.log("encryptionRequested:", encryptionRequested)
 
-		let cipherId:any = null
 		let fileToAddInDescription:string = ""
 
-		// checks if the encryption is requested by user
 		if (encryptionRequested === true) {
 
 			try {
-				// if requested, do the medusa dance
-				const medusaOracleAddress = MEDUSA_ORACLE_CONTRACT_ADDRESS
-				const medusa = await Medusa.init(medusaOracleAddress, signer);
+
+				const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer);
 				console.log("medusa:", medusa)
 
 				// prepare medusa client
@@ -64,15 +62,8 @@ const Editor: FC = () => {
 					signer
 				)
 
-				const medusaPublicKey = await medusa.fetchPublicKey()
-				const publicKeyFromMedusaClient = await medusaClient.publicKey()
-				console.log("medusaPublicKey:", medusaPublicKey)
-				const keypair = await medusa.signForKeypair()
-				console.log("keypair:", keypair)
-
 				console.log("plaintext:", plaintext)
 				const buff = new TextEncoder().encode(plaintext)
-				await medusa.fetchPublicKey()
 				const { encryptedData, encryptedKey } = await medusa.encrypt(
 					buff,
 					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS,
@@ -83,20 +74,14 @@ const Editor: FC = () => {
 				console.log("encryptedData:", encryptedData)
 				console.log("encryptedKey:", encryptedKey)
 
-				// store that encrypted file
+				const pubkeyFromContract = await medusaClient.publicKey()
+				console.log("pubkeyFromContract:", pubkeyFromContract)
+
+				// store the encrypted file
 				const encryptedFileIPFSUrl = await UploadData(encryptedData, name)
 				fileToAddInDescription = encryptedFileIPFSUrl
 				
 				console.log("[before medusaCall] encryptedKey", encryptedKey)
-				// console.log("[before medusaCall] encryptedFileIPFSUrl", encryptedFileIPFSUrl)
-
-				console.log("publicKeyFromMedusaClient:", publicKeyFromMedusaClient)
-
-				let evmPoint = null;
-				if (medusa?.keypair) {
-					const { x, y } = publicKeyFromMedusaClient
-					evmPoint = { x, y }
-				}
 
 				// medusa call
 				const medusaCall = await medusaClient.createListing(
@@ -112,14 +97,6 @@ const Editor: FC = () => {
 				)
 				console.log("[after medusaCall] medusaCall:", medusaCall)
 				console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + medusaCall.hash)
-
-				// medusaCall.wait(2)
-
-				// const filterTx = await medusaClient.queryFilter("NewListing", medusaCall.blockNumber)
-
-				// cipherId = filterTx
-
-				// console.log("filterTx cipherId:", cipherId)
 			
 			} catch(e) {
 				console.log("error:", e)
@@ -132,6 +109,8 @@ const Editor: FC = () => {
 
 			// if encryption is not requested, upload the file to ipfs
 			fileToAddInDescription = await UploadFile(plaintext, name)
+			console.log("[no encryption] fileToAddInDescription:", fileToAddInDescription)
+
 		}
 
 		try {
@@ -152,27 +131,28 @@ const Editor: FC = () => {
 			console.log("encryptionRequested:", encryptionRequested)
 			if (fileToAddInDescription) { // won't work if no file attached
 
-				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + fileToAddInDescription + ")"
+				PROPOSAL_DESCRIPTION = "" + "[Test proposal] " + title + "\n" + description + "\n\n[View attached document](" + fileToAddInDescription + ")"
 				if (encryptionRequested) {
 					PROPOSAL_DESCRIPTION += " encrypted" /*+ (cipherId === null ? "没有" : cipherId)*/
 				}
 
 			} else {
-				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
+				PROPOSAL_DESCRIPTION = "" + "[Test proposal] " + title + "\n" + description + ""
 			}
 		
 			console.log("PROPOSAL_DESCRIPTION:", PROPOSAL_DESCRIPTION)
 
+			// set targets and values
 			const targets = [beneficiary]
 			const values = [ethers.utils.parseEther(amount)]
 
 			console.log(amount)
 			console.log(description)
-			console.log("submitProposal triggered")
 			setAmount(amount)
 
 			console.log("encryptionRequested:", encryptionRequested)
 			
+			// call propose
 			const propose = await gov.propose(
 				targets, 
 				values, 
@@ -194,17 +174,24 @@ const Editor: FC = () => {
 	}
 			
 	const handleFileChange = (event: any) => {
-		console.log("File uploaded successfully!")
-		const file = event
-		setName(file.name)
-		const reader = new FileReader()
-		reader.readAsDataURL(file);
-		reader.onload = (event) => {
-			const plaintext = event.target?.result as string
-			setPlaintext(plaintext)
+		if (encryptionRequested) {
+			console.log("File uploaded successfully!")
+			const file = event
+			setName(file.name)
+			const reader = new FileReader()
+			reader.readAsDataURL(file);
+			reader.onload = (event) => {
+				const plaintext = event.target?.result as string
+				setPlaintext(plaintext)
+			}
+			reader.onerror = (error) => {
+			console.log('File Input Error: ', error);
 		}
-		reader.onerror = (error) => {
-		console.log('File Input Error: ', error);
+		} else {
+			console.log("event:", event)
+			const file = event
+			setName(file.name)
+			setPlaintext(file)
 		}
 	}
 	
@@ -332,9 +319,9 @@ const Editor: FC = () => {
 									style={{minWidth:"400px", width:"100%"}}
 									onChange={(e) => handleFileChange(e.target.files[0])}
 								/>
-								<div className="flex items-center">
+								{/* <div className="flex items-center">
 									<input 
-										defaultChecked
+										// defaultChecked
 										id="encryption-requested" 
 										type="checkbox" 
 										value="" 
@@ -342,7 +329,7 @@ const Editor: FC = () => {
 										onChange={e => setEncryptionRequested(e.target.checked)}
 									/>
 									<label htmlFor="checked-checkbox" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Only accessible to the DAO members</label>
-								</div>
+								</div> */}
 							</div>
 						</div>
 						<br />
