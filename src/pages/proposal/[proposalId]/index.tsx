@@ -47,6 +47,25 @@ const ProposalPage: FC = () => {
 
 	const decrypt = async () => {
 
+		/*
+
+		Order of operations
+
+		# --- Alice encrypts and uploads
+		const plaintextString = 'Some data to store'
+		const plaintextBytes = TextEncoder.encode(plaintextString)
+		const { encryptedData } = medusa.encrypt(...)
+		const encryptedDataBase64 = Base64.fromUint8Array(encryptedData)
+		uploadFile(encryptedDataBase64)
+
+		# --- Bob downloads and decrypts
+		const encryptedDataBase64 = downloadFile(uri)
+		const encryptedData = Base64.toUint8Array(encryptedDataBase64)
+		const plaintextBytes = medusa.decrypt(...)
+		const plaintextString = TextDecoder.decode(plaintextBytes)
+
+		*/
+
 		console.log("decrypt triggered...")
 
 		console.log("uri:", uri)
