@@ -39,7 +39,7 @@ const Editor: FC = () => {
 	const { data: signer, isError, isLoading  } = useSigner({  onError(error) {  console.log('my Error', error)   },   })
 
 	const submitProposal = async (e:any) => {
-		
+
 		e.preventDefault();
 
 		console.log("submitProposal triggered")
