@@ -29,18 +29,13 @@ const MedusaPlayground: FC = () => {
 	const [encryptionRequested, setEncryptionRequested] = useState(true);
 	const [name, setName] = useState(null);
 	const [plaintext, setPlaintext] = useState(null);
+	const [encryptedFileIPFSUrl, setEncryptedFileIPFSUrl] = useState(null);
 	
 	const router = useRouter();
 	const { data: signer, isError, isLoading  } = useSigner({  onError(error) {  console.log('my Error', error)   },   })
 
-	const test1 = async (e:any) => {
-
-		e.preventDefault();
-
-		console.log("submitProposal triggered")
-		console.log("file name:", name)
-		console.log("encryptionRequested:", encryptionRequested)
-
+	const encrypt = async (e:any) => {
+		
 		/*
 
 		Order of operations
@@ -52,52 +47,7 @@ const MedusaPlayground: FC = () => {
 		const encryptedDataBase64 = Base64.fromUint8Array(encryptedData)
 		uploadFile(encryptedDataBase64)
 
-		# --- Bob downloads and decrypts
-		const encryptedDataBase64 = downloadFile(uri)
-		const encryptedData = Base64.toUint8Array(encryptedDataBase64)
-		const plaintextBytes = medusa.decrypt(...)
-		const plaintextString = TextDecoder.decode(plaintextBytes)
-
 		*/
-
-		console.log("encrypt start")
-
-		const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer);
-		console.log("medusa:", medusa)
-
-		const plaintextString = 'Some data to store'
-		// const plaintextBytes = TextEncoder.encode(plaintextString)
-		const plaintextBytes = new TextEncoder().encode(plaintextString)
-		const { encryptedData, encryptedKey } = await medusa.encrypt(plaintextBytes, MEDUSA_CLIENT_APP_CONTRACT_ADDRESS)
-
-		console.log("encryptedData:", encryptedData)
-		console.log("encryptedKey:", encryptedKey)
-		const encryptedDataBase64 = Base64.fromUint8Array(encryptedData)
-
-		await UploadData(encryptedDataBase64, 'test.md')
-
-		console.log("decrypt start")
-		// const encryptedDataBase64 = downloadFile(uri)
-		const medusaClient = new ethers.Contract(
-			MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
-			meduasaClientAbi, 
-			signer
-		)
-		const encryptedData2 = Base64.toUint8Array(encryptedDataBase64)
-		const ciphertext = await medusaClient.queryFilter( "ListingDecryption", 6895301, 6895311 )
-		console.log("ciphertext:", ciphertext[0].args.ciphertext)
-		const plaintextBytes2 = await medusa.decrypt(
-			encryptedKey, // encryptedKey
-			encryptedData2, // encrypted data/file
-		) // error: "Called `_unsafeUnwrap` on an Err"
-
-		// const plaintextString2 = new TextDecoder().decode(plaintextBytes)
-
-		console.log("plaintextBytes2:", plaintextBytes2)
-
-	}
-
-	const test2 = async (e:any) => {
 
 		e.preventDefault();
 
@@ -122,6 +72,7 @@ const MedusaPlayground: FC = () => {
 
 		const encryptedFileIPFSUrl = await UploadData(encryptedDataBase64, 'test.md')
 		console.log("encryptedFileIPFSUrl:", encryptedFileIPFSUrl)
+		setEncryptedFileIPFSUrl(encryptedFileIPFSUrl)
 
 		// prepare medusa client
 		const medusaClient = new ethers.Contract(
@@ -141,19 +92,44 @@ const MedusaPlayground: FC = () => {
 
 		console.log("encrypt done")
 
+	}
 
-		return 
-		////////////////////////////////////
+	const decrypt = async (e:any) => {
+
+		/*
+
+		Order of operations
+
+		# --- Bob downloads and decrypts
+		const encryptedDataBase64 = downloadFile(uri)
+		const encryptedData = Base64.toUint8Array(encryptedDataBase64)
+		const plaintextBytes = medusa.decrypt(...)
+		const plaintextString = TextDecoder.decode(plaintextBytes)
+
+		*/
+		e.preventDefault();
 
 		console.log("decrypt start")
+		
+		const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer);
+		console.log("medusa:", medusa)
 
 		const keypair = await medusa.signForKeypair()
 		const { x, y } = keypair.pubkey.toEvm()
 		const evmPoint = { x, y }
 		const buyerPublicKey:EVMG1Point = evmPoint
 		console.log("buyerPublicKey:", buyerPublicKey)
+
+		return
 		
-		// const encryptedDataBase64 = downloadFile(uri)
+		const encryptedDataBase64 = fetch(encryptedFileIPFSUrl)
+
+		// prepare medusa client
+		const medusaClient = new ethers.Contract(
+			MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
+			meduasaClientAbi, 
+			signer
+		)
 
 		const buyListing = await medusaClient.buyListing( encryptedFileIPFSUrl, "keypair")
 
@@ -163,14 +139,21 @@ const MedusaPlayground: FC = () => {
 		const buyListingTx = await buyListing.wait()
 		console.log("buyListingTx:", buyListingTx )
 
-		const encryptedData2 = Base64.toUint8Array(encryptedDataBase64)
+		// const encryptedDataBase64 = await fetch(encryptedFileIPFSUrl)
+
+		
+
+		console.log("encryptedDataBase64:", encryptedDataBase64)
+		
+		const encryptedData = Base64.toUint8Array(encryptedDataBase64)
+
 		console.log("buyListingTx.blockNumber:", buyListingTx.blockNumber)
 		const ciphertext = await medusaClient.queryFilter( "ListingDecryption", buyListingTx.blockNumber -1 )
 		// console.log("ciphertext:", ciphertext[0].args.ciphertext)
 		console.log("ciphertext:", ciphertext)
 		const plaintextBytes2 = await medusa.decrypt(
 			encryptedKey, // encryptedKey
-			encryptedData2, // encrypted data/file
+			encryptedData, // encrypted data/file
 		) // error: "Called `_unsafeUnwrap` on an Err"
 
 		// const plaintextString2 = new TextDecoder().decode(plaintextBytes)
@@ -236,12 +219,12 @@ const MedusaPlayground: FC = () => {
 						<div className="flex justify-center">
 
 							<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-200 border border-pink-500 hover:border-transparent rounded" 
-							onClick={test1}>
-							Test 1
+							onClick={encrypt}>
+							Encrypt
 							</button> 
 							<button className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 mt-200 border border-pink-500 hover:border-transparent rounded ml-4" 
-							onClick={test2}>
-							Test 2
+							onClick={decrypt}>
+							Decrypt
 							</button>
 
 						</div>
