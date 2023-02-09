@@ -30,7 +30,7 @@ const Editor: FC = () => {
 	const [description, setDescription] = useState("")
 	// const [description, setDescription] = useState(title)
 	// const [encryptionRequested, setEncryptionRequested] = useState(true);
-	const [encryptionRequested, setEncryptionRequested] = useState(false);
+	const [encryptionRequested, setEncryptionRequested] = useState(true);
 	const [name, setName] = useState(null);
 	const [plaintext, setPlaintext] = useState(null);
 	// const [fileToAddInDescription, setFileToAddInDescription] = useState(null);
@@ -39,7 +39,7 @@ const Editor: FC = () => {
 	const { data: signer, isError, isLoading  } = useSigner({  onError(error) {  console.log('my Error', error)   },   })
 
 	const submitProposal = async (e:any) => {
-		
+
 		e.preventDefault();
 
 		console.log("submitProposal triggered")
@@ -319,9 +319,9 @@ const Editor: FC = () => {
 									style={{minWidth:"400px", width:"100%"}}
 									onChange={(e) => handleFileChange(e.target.files[0])}
 								/>
-								{/* <div className="flex items-center">
+								<div className="flex items-center">
 									<input 
-										// defaultChecked
+										defaultChecked
 										id="encryption-requested" 
 										type="checkbox" 
 										value="" 
@@ -329,7 +329,7 @@ const Editor: FC = () => {
 										onChange={e => setEncryptionRequested(e.target.checked)}
 									/>
 									<label htmlFor="checked-checkbox" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Only accessible to the DAO members</label>
-								</div> */}
+								</div>
 							</div>
 						</div>
 						<br />
