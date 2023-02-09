@@ -53,7 +53,7 @@ const MedusaPlayground: FC = () => {
 		)
 
 		// get plaintextBytes
-		const plaintextString = 'My super secret'
+		const plaintextString = 'My secret'
 		const plaintextBytes = new TextEncoder().encode(plaintextString)
 		console.log("plaintextBytes:", plaintextBytes)
 
@@ -62,10 +62,10 @@ const MedusaPlayground: FC = () => {
 			plaintextBytes, 
 			MEDUSA_CLIENT_APP_CONTRACT_ADDRESS
 		)
+		// const { encryptedData } = await medusa.encrypt(plaintextBytes, MEDUSA_CLIENT_APP_CONTRACT_ADDRESS)
 		console.log("encryptedData:", encryptedData)
 		console.log("encryptedKey:", encryptedKey)		
 		setMyData(encryptedData)
-
 		// to Base64
 		const encryptedDataBase64 = Base64.fromUint8Array(encryptedData)
 		setIsEncrypted(encryptedDataBase64)
@@ -103,9 +103,6 @@ const MedusaPlayground: FC = () => {
 
 		console.log("decrypt start //////////")
 		
-		console.log("myData:", myData)
-		console.log("url:", url)
-
 		// Medusa init
 		const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer);
 		console.log("medusa:", medusa)
@@ -135,6 +132,11 @@ const MedusaPlayground: FC = () => {
 		console.log("tx hash:", "https://goerli.arbiscan.io/tx/" + buyListing.hash)
 		console.log("buyListingTx:", buyListingTx )
 
+		// download and read encrypted data from url
+		let encryptedDataBase64 = null
+		window.URL.createObjectURL( encryptedDataBase64 = new Blob([url]), )
+		console.log("encryptedDataBase64:", encryptedDataBase64)
+
 		// get requestId from url
 		const requestId = await medusaClient.requests(url)
 		const requestIdFormatted = parseInt(requestId)
@@ -143,13 +145,13 @@ const MedusaPlayground: FC = () => {
 		const ciphertext = await medusaClient.ciphers(requestIdFormatted)
 		console.log("ciphertext:", ciphertext)
 
-		// download and read encrypted data from url
-		const myBlob = await fetch(url)
-		let result = null
-		if (myBlob.ok) { result = await myBlob.text() }
-		console.log("myBlob", myBlob)
-		console.log("result", result)
-		const blob = Base64.toUint8Array(result)
+		// format data
+		const blobRaw = await encryptedDataBase64.arrayBuffer()
+		// const blobRaw = "j5B/nKXHDVjpkSPrQEwLPu/uS2HieXKmqQUmQ5qB1fDcWlNZjD3ZTNa0q6Gotm8sdg=="
+		console.log("blobRaw:", blobRaw)
+		// const blob = new Uint8Array( blobRaw )
+		const blob = myData
+		
 		console.log("blob:", blob)
 
 		// medusa.decrypt
