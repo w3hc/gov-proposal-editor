@@ -49,10 +49,6 @@ const ProposalPage: FC = () => {
 	const decrypt = async () => {
 
 		console.log("decrypt triggered...")
-
-		console.log("uri:", uri)
-		console.log("isEncrypted:", isEncrypted)
-		console.log("initialized:", initialized)
 		
 		if (isEncrypted === true) {
 
@@ -142,7 +138,7 @@ const ProposalPage: FC = () => {
 
 							setTitle(proposals[i].args[8].substring(proposals[i].args[8][0]=="#" ? 2 : 0, proposals[i].args[8].indexOf("\n")))
 							setDescription(proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
-							console.log("desc:", proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
+							// console.log("desc:", proposals[i].args[8].substring(proposals[i].args[8].indexOf("\n"),proposals[i].args[8].indexOf("[")))
 							setUri(proposals[i].args[8].substring(proposals[i].args[8].indexOf("(") +1 ,proposals[i].args[8].indexOf(")") ))
 							if (proposals[i].args[8].substring(proposals[i].args[8].indexOf(")")+2) === "encrypted") {
 								setIsEncrypted(true)
@@ -150,9 +146,7 @@ const ProposalPage: FC = () => {
 								setIsEncrypted(false)
 							}
 							setInitialized(true)
-							console.log("proposals[i].args[8]:", proposals[i].args[8])
-							console.log("uri:", uri)
-
+							console.log("original description:", proposals[i].args[8])
 						}	
 					}
 				}
@@ -164,6 +158,9 @@ const ProposalPage: FC = () => {
 
 	useEffect(() => {
 		getProposalData()
+		console.log("[init] uri:", uri)
+		console.log("[init] isEncrypted:", isEncrypted)
+		console.log("[init] initialized:", initialized)
 	},[getProposalData]);
 
 	return (

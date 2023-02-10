@@ -21,19 +21,13 @@ const provider = new ethers.providers.JsonRpcProvider(endpoint)
 
 const Home: FC = () => {
 
-	const [err, setErr] = useState(false)
-	const [amount, setAmount] = useState("")
-	const [title, setTitle] = useState("")
-	const [beneficiary, setBeneficiary] = useState("")
-	const [description, setDescription] = useState("")
-	const [selectedFile, setSelectedFile] = useState(null);
-	// const [proposalId, setProposalId] = useState(0);
-
 	const { data, error, isLoading, refetch } = useSigner()
 	const gov = new ethers.Contract('0x17BccCC8E7c0DC62453a508988b61850744612F3', govAbi, provider)
 
 	const [block, setBlock] = useState(0);
-	const [manifesto, setManifesto] = useState("");
+	const [manifesto, setManifesto] = useState("")
+	const [name, setName] = useState("")
+	const [manifestoLink, setManifestoLink] = useState("")
 	const [proposal, setProposal] = useState<{id:string; link:string, title: string, state: number}[]>([{
 		id: "12345678",
 		link: "http://link.com",
@@ -55,9 +49,10 @@ const Home: FC = () => {
 	const baseUrl = "/proposal/"
  
 	useEffect(() => {
-		getBlock();
-		getManifesto();
-	},[]);
+		getBlock()
+		getName()
+		getManifesto()
+	},[])
 	
 	const getBlock = async () => {
 		const blockNumber = await provider.getBlockNumber();
@@ -65,12 +60,24 @@ const Home: FC = () => {
 	}
 
 	const getManifesto = async () => {
-		const getManifesto = await gov.manifesto();
-		console.log("getManifesto:", getManifesto)
-		if (getManifesto === "") {
+		const manifesto = await gov.manifesto();
+		console.log("manifesto:", manifesto)
+		if (manifesto === "") {
 			setManifesto("unset")
+			setManifestoLink("https://bafybeihmgfg2gmm23ozur3ylmkxgwkyr5dlpruivv3wjeujrdktxihqe3a.ipfs.w3s.link/manifesto.md")
 		} else {
-			setManifesto(getManifesto)
+			setManifesto(manifesto)
+			setManifestoLink("https://" + manifesto + ".ipfs.w3s.link")
+		}
+	}
+
+	const getName = async () => {
+		const name = await gov.name();
+		console.log("name:", name)
+		if (name === "") {
+			setName("unset")
+		} else {
+			setName(name)
 		}
 	}
 
@@ -88,7 +95,7 @@ const Home: FC = () => {
 
 			if (proposals[0].args != undefined) {
 				// for( i ; i < Number(proposals.length) ; i++) {
-				for( i = 76; i < Number(proposals.length) ; i++) {
+				for( i = 83; i < Number(proposals.length) ; i++) {
 						// console.log("executed:", String(proposals[i].args?.proposalId))
 				console.log("proposals[i]:", proposals[i].args[8][0])
 
@@ -117,7 +124,19 @@ const Home: FC = () => {
 	},[getProposals, proposal]);
 
 	function Item(props) {
-		return <p><strong><a style={{color:"#45a2f8"}} href = {props.link}>{props.title} </a></strong> { proposalState[props.state]} </p>
+		return <>
+			<div className="md:container md:mx-auto border m-3 p-2 dark:border-pink-600 rounded-lg">
+				<div>
+					<strong><a 
+					style={{color:"#45a2f8"}} 
+					href = {props.link}>{props.title} 
+					</a></strong>
+				</div>
+				<div>
+					<small>{proposalState[props.state]}</small>
+				</div>
+			</div>
+		</>
 	} 
 	
 	function List() {
@@ -167,11 +186,11 @@ const Home: FC = () => {
         
 									<div className={inter.className}>
 							
-									<p>Current block number: <strong>{block}</strong></p><br />
+									<h1><strong>{name}</strong></h1><br />
 									<p>Gov contract address: <strong><a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://goerli.arbiscan.io/address/0x17BccCC8E7c0DC62453a508988b61850744612F3#code">{gov.address}</a></strong></p><br />
-									<p>Manifesto: <a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href="https://bafybeihmgfg2gmm23ozur3ylmkxgwkyr5dlpruivv3wjeujrdktxihqe3a.ipfs.w3s.link/manifesto.md"><strong>{manifesto}</strong></a></p><br />
+									<p>Manifesto: <a style={{color:"#45a2f8"}} target="_blank" rel="noopener noreferrer" href={manifestoLink}><strong>{manifesto}</strong></a></p><br />
 									
-									<h3>All proposals </h3><br />
+									<h3>All proposals: </h3><br />
 
 									<List />
 
