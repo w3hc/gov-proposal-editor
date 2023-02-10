@@ -134,6 +134,8 @@ const Editor: FC = () => {
 					PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + fileToAddInDescription + ")"
 					if (encryptionRequested) {
 						PROPOSAL_DESCRIPTION += " encrypted" /*+ (cipherId === null ? "没有" : cipherId)*/
+					} else {
+						PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
 					}
 				} else {
 					PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
@@ -345,7 +347,7 @@ const Editor: FC = () => {
 										defaultChecked
 										id="encryption-requested" 
 										type="checkbox" 
-										value="" 
+										value="encryptionRequested" 
 										className="w-4 h-4 text-red-600 bg-white-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-white-800 focus:ring-2 dark:bg-white-700 dark:border-red-600" 
 										onChange={e => setEncryptionRequested(e.target.checked)}
 									/>
