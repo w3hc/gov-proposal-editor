@@ -4,20 +4,15 @@ import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useSigner } from 'wagmi'
 import { govAbi, meduasaClientAbi, TALLY_DAO_NAME, MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, MEDUSA_ORACLE_CONTRACT_ADDRESS } from '../lib/consts'
 import { ethers } from 'ethers';
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from 'next/link'
 import Head from 'next/head'
 import { UploadFile } from '../components/UploadFile'
 import { UploadData } from '../components/UploadData'
 import { useRouter } from 'next/router'
-import { Medusa, EVMG1Point, SuiteType } from "@medusa-network/medusa-sdk"
-// import { Base64 } from "js-base64"
-import { HGamalEVMCipher } from '@medusa-network/medusa-sdk'
-import toast from 'react-hot-toast'
+import { Medusa } from "@medusa-network/medusa-sdk"
 import { Base64 } from 'js-base64'
 
-const endpoint = process.env.NEXT_PUBLIC_ARBITRUM_GOERLI_ENDPOINT_URL
-// const provider = new ethers.providers.JsonRpcProvider(endpoint)
 const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Editor: FC = () => {
@@ -29,6 +24,7 @@ const Editor: FC = () => {
 	const [encryptionRequested, setEncryptionRequested] = useState(true)
 	const [name, setName] = useState(null);
 	const [plaintext, setPlaintext] = useState(null)
+	const [proposalType, setProposalType] = useState("1")
 	
 	const router = useRouter()
 	const { data: signer, isError, isLoading  } = useSigner()
@@ -230,10 +226,28 @@ const Editor: FC = () => {
 				<div className="max-w-6xl mx-auto sm:px-6 lg:px-200">
 						
 					<div className="grid max-w-lg gap-6 mb-6 md:grid-cols-1">
-						<br /> <br /> <br /> <br /> 
+						<br /> <br /> <br /> 
+					</div>
+
+					<div className="grid max-w-lg gap-6 mb-10 ml-20 md:grid-cols-1">
+						
+						<select 
+							id="proposalTypes" 
+							className="max-w-xs block w-full p-2 mb-2 text-sm text-gray-900 border border-blue-300 rounded-lg bg-blue-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+							onChange={(e) => setProposalType(e.target.value)} 
+						>
+							<option selected value ="1">Request funding</option>
+							<option  value="2">Add a member</option>
+							<option disabled value="3">Ban a member</option>
+							<option disabled value="4">Update manifesto</option>
+							<option disabled value="5">Update NFT metadata</option>
+							<option disabled value="6">Update website</option>
+							<option disabled value="7">Custom</option>
+						</select>
+						
 					</div>
 						
-					<form>
+					{proposalType === "1" && <><form>
 						<div className="grid gap-6 mb-6 md:grid-cols-1" >
 							<div>
 								<div className="justify-center flex ">
@@ -348,7 +362,20 @@ const Editor: FC = () => {
 							</button> 
 
 						</div>
-					</form>	
+					</form></>}	
+					{proposalType === "2" && 
+					<>
+						<form>
+							<div className="grid gap-6 mb-6 md:grid-cols-1" >
+								<div>
+									<div className="justify-center flex ">
+										<div>
+											<p>Hello!</p>
+										</div>
+									</div>
+							</div>
+						</div>
+					</form></>}
 				</div>
 			</div>
 		</>
