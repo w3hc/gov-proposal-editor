@@ -22,21 +22,16 @@ const baseUrl = "https://www.tally.xyz/gov/"+TALLY_DAO_NAME+"/proposal/"
 
 const Editor: FC = () => {
 
-	// const [amount, setAmount] = useState("")
 	const [amount, setAmount] = useState("1")
-	const [title, setTitle] = useState("")
-	// const [beneficiary, setBeneficiary] = useState("")
+	const [title, setTitle] = useState("One more cool contrib")
 	const [beneficiary, setBeneficiary] = useState("0xD8a394e7d7894bDF2C57139fF17e5CBAa29Dd977")
-	const [description, setDescription] = useState("")
-	// const [description, setDescription] = useState(title)
-	// const [encryptionRequested, setEncryptionRequested] = useState(true);
-	const [encryptionRequested, setEncryptionRequested] = useState(true);
+	const [description, setDescription] = useState("I did this and that...")
+	const [encryptionRequested, setEncryptionRequested] = useState(true)
 	const [name, setName] = useState(null);
-	const [plaintext, setPlaintext] = useState(null);
-	// const [fileToAddInDescription, setFileToAddInDescription] = useState(null);
+	const [plaintext, setPlaintext] = useState(null)
 	
-	const router = useRouter();
-	const { data: signer, isError, isLoading  } = useSigner({  onError(error) {  console.log('my Error', error)   },   })
+	const router = useRouter()
+	const { data: signer, isError, isLoading  } = useSigner()
 
 	const submitProposal = async (e:any) => {
 
@@ -47,39 +42,51 @@ const Editor: FC = () => {
 		console.log("encryptionRequested:", encryptionRequested)
 
 		let fileToAddInDescription:string = ""
+		let plaintextString = ""
 
 		if (encryptionRequested === true) {
 
 			try {
 
+				e.preventDefault();
+
+				console.log("encrypt start //////////")
+
+				// Medusa init
+				console.log("signer:", signer)
+
 				const medusa = await Medusa.init(MEDUSA_ORACLE_CONTRACT_ADDRESS, signer);
 				console.log("medusa:", medusa)
 
-				// prepare medusa client
+				// prepare medusa client (https://github.com/w3hc/private-doc/blob/main/contracts/PrivateDoc.sol)
 				const medusaClient = new ethers.Contract(
 					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS, 
 					meduasaClientAbi, 
 					signer
 				)
 
-				console.log("plaintext:", plaintext)
-				const buff = new TextEncoder().encode(plaintext)
+				// get plaintextBytes
+				plaintextString = plaintext
+				console.log("plaintextString:", plaintextString)
+				const plaintextBytes = new TextEncoder().encode(plaintextString)
+				console.log("plaintextBytes:", plaintextBytes)
+
+				// medusa.encrypt
 				const { encryptedData, encryptedKey } = await medusa.encrypt(
-					buff,
-					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS,
+					plaintextBytes, 
+					MEDUSA_CLIENT_APP_CONTRACT_ADDRESS
 				)
 
-				console.log("buff:", buff)
-
 				console.log("encryptedData:", encryptedData)
-				console.log("encryptedKey:", encryptedKey)
+				console.log("encryptedKey:", encryptedKey)		
 
-				const pubkeyFromContract = await medusaClient.publicKey()
-				console.log("pubkeyFromContract:", pubkeyFromContract)
+				// to Base64
+				const encryptedDataBase64 = Base64.fromUint8Array(encryptedData)
 
-				// store the encrypted file
-				const encryptedFileIPFSUrl = await UploadData(encryptedData, name)
-				fileToAddInDescription = encryptedFileIPFSUrl
+				// upload (Web3.Storage)
+				const ipfsUrl = await UploadData(encryptedDataBase64, name)
+				console.log("ipfsUrl:", ipfsUrl)
+				fileToAddInDescription = ipfsUrl
 				
 				console.log("[before medusaCall] encryptedKey", encryptedKey)
 
@@ -87,12 +94,7 @@ const Editor: FC = () => {
 				const medusaCall = await medusaClient.createListing(
 
 					encryptedKey,
-					// pubKey,
-					// evmPoint,
-					// publicKeyFromMedusaClient,
-					encryptedFileIPFSUrl
-
-					// , {gasLimit:6000000}
+					ipfsUrl
 
 				)
 				console.log("[after medusaCall] medusaCall:", medusaCall)
@@ -114,7 +116,7 @@ const Editor: FC = () => {
 		}
 
 		try {
-		// prepare Gov
+			// prepare Gov
 			const gov = new ethers.Contract(
 				'0x17BccCC8E7c0DC62453a508988b61850744612F3', 
 				govAbi, 
@@ -129,15 +131,20 @@ const Editor: FC = () => {
 			let PROPOSAL_DESCRIPTION: string
 			console.log("fileToAddInDescription:", fileToAddInDescription)
 			console.log("encryptionRequested:", encryptionRequested)
-			if (fileToAddInDescription) { // won't work if no file attached
+			console.log("plaintextString:", plaintextString)
 
-				PROPOSAL_DESCRIPTION = "" + "[Test proposal] " + title + "\n" + description + "\n\n[View attached document](" + fileToAddInDescription + ")"
-				if (encryptionRequested) {
-					PROPOSAL_DESCRIPTION += " encrypted" /*+ (cipherId === null ? "没有" : cipherId)*/
+			if (fileToAddInDescription) { // won't work if no file attached
+				if (plaintextString) {
+					PROPOSAL_DESCRIPTION = "" + title + "\n" + description + "\n\n[View attached document](" + fileToAddInDescription + ")"
+					if (encryptionRequested) {
+						PROPOSAL_DESCRIPTION += " encrypted" /*+ (cipherId === null ? "没有" : cipherId)*/
+					}
+				} else {
+					PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
 				}
 
 			} else {
-				PROPOSAL_DESCRIPTION = "" + "[Test proposal] " + title + "\n" + description + ""
+				PROPOSAL_DESCRIPTION = "" + title + "\n" + description + ""
 			}
 		
 			console.log("PROPOSAL_DESCRIPTION:", PROPOSAL_DESCRIPTION)
@@ -175,7 +182,7 @@ const Editor: FC = () => {
 			
 	const handleFileChange = (event: any) => {
 		if (encryptionRequested) {
-			console.log("File uploaded successfully!")
+			console.log("handleFileChange:", event)
 			const file = event
 			setName(file.name)
 			const reader = new FileReader()
@@ -185,8 +192,8 @@ const Editor: FC = () => {
 				setPlaintext(plaintext)
 			}
 			reader.onerror = (error) => {
-			console.log('File Input Error: ', error);
-		}
+				console.log('File Input Error: ', error);
+			}
 		} else {
 			console.log("event:", event)
 			const file = event
@@ -312,7 +319,7 @@ const Editor: FC = () => {
 						<div className="justify-center flex ">
 							<div>
 								<label style={{minWidth:"400px", width:"100%"}} className="block text-sm font-medium text-gray-900 dark:text-white" htmlFor="file_input">Attached document</label>
-								<input 
+								<input
 									className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" 
 									id="file_input" 
 									type="file"
